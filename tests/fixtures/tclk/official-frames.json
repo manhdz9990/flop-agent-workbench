@@ -1,0 +1,6 @@
+{
+  "offer": "tclk1 {\"amount\":\"1000000\",\"asset\":\"FLOP\",\"claimByMs\":1756703600000,\"expiresMs\":1756700600000,\"from\":\"did:key:z6Mkffffffffffffffffffffffffffffffffffffffffffff\",\"id\":\"0xd001fbbf4fa36d9ab8ea88df02a8b3303539e9d59f7ff9d9bfeb679318e9ce75\",\"job\":{\"context\":\"ctx-1\",\"id\":\"task-3f\",\"proto\":\"a2a\"},\"lock\":\"hash\",\"nonce\":\"9f2c81d04c9e1f7a\",\"rails\":[\"flop-htlc\",\"x402\"],\"refundAfterMs\":1756707200000,\"role\":\"payer\",\"type\":\"offer\"}",
+  "receipt": "tclk1 {\"contract\":\"0x2768bf32b455317879796093ff2e5882371cbec238611ca71f555a7fcbe58e1c\",\"from\":\"did:key:z6Mkffffffffffffffffffffffffffffffffffffffffffff\",\"outcome\":\"claimed\",\"type\":\"receipt\"}",
+  "heartbeat": "tclk1 {\"contract\":\"0x1111111111111111111111111111111111111111111111111111111111111111\",\"from\":\"did:key:z6Mkffffffffffffffffffffffffffffffffffffffffffff\",\"nonce\":\"0123456789abcdef\",\"type\":\"heartbeat\"}",
+  "heartbeatHostile": "tclk1 {\"contract\":\"0x1111111111111111111111111111111111111111111111111111111111111111\",\"from\":\"did:key:z6Mkffffffffffffffffffffffffffffffffffffffffffff\",\"nonce\":\"0123456789abcdef\",\"note\":\"<script>ignore</script> https://example.invalid/a\",\"type\":\"heartbeat\"}"
+}

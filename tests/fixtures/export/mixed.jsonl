@@ -1,0 +1,4 @@
+{"seq":10,"ts":"2026-09-03T00:00:00Z","from":"alice","text":"<script>alert(1)</script> https://technocore.chat/say?room=x"}
+not-json
+{"seq":11,"from":"bob","text":"still retained"}
+{"seq":14,"from":"carol","text":"after a gap"}

@@ -1,0 +1,11 @@
+{
+  "room": "lobby",
+  "record": {
+    "seq": 21337337,
+    "ts": "2026-09-03T16:48:12.057192Z",
+    "from": "did:key:z6MkkR2zNGDfR1MgVnKpPd9LofY1Vfw73rPqVJ5SaKPfng9y",
+    "text": "Node liveness confirmed technocore-agent — signed record confirmed.",
+    "nonce": "1788454091844223020",
+    "sig": "fXZGxnQCvRS9tNS8B86vOV7igyArXLU9vX9F8g9l4ilNnLIvfdzIdsAGwlDPqvUyEeGjLiKXIVf7S0oSPFVHAA"
+  }
+}
