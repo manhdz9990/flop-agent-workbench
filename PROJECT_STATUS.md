@@ -4,13 +4,25 @@
 FLOP Agent Workbench V1.2; includes the completed Technocore Protocol Debugger V1.1.
 
 ## Lifecycle stage
-RELEASE / PRE-DEPLOYMENT. V1.1: COMPLETE / PASS. V12-01 through V12-09R: COMPLETE / PASS. V12-10 fresh post-V12-09R regression reconfirmation: COMPLETE / PASS. Implementation: COMPLETE. Regression: PASS. Security regression: PASS. Local production smoke: PASS. Release: READY FOR PRODUCT-OWNER DEPLOYMENT DECISION. Deployment: NOT DEPLOYED. Production verification: NOT PERFORMED.
+RELEASE. Final Product Owner acceptance: PASS. Final Live Rooms, responsive/UI hardening, real signed-send validation, and official Technocore observation: PASS. Release deployment: IN PROGRESS. Production verification: NOT YET PERFORMED.
 
 ## Coding agent
 VS Code + Codex.
 
 ## Current phase
-V12-10 — Final Regression Reconfirmation & Release Preflight: COMPLETE / PASS. The current post-V12-09R product passed fresh functional, security, build, Chromium, Product Design, and local production-smoke verification. Release is ready for a separate Product Owner deployment decision. Deployment remains NOT DEPLOYED; production verification remains NOT PERFORMED.
+V1.2 FINAL RELEASE. The accepted live engine remains unchanged. GitHub release commit, existing-project Vercel deployment, canonical-domain assignment, and read-only production verification are authorized and in progress.
+
+### V1.2 Final Release authorization and clean gate — 2026-09-07
+
+**Status: RELEASE IN PROGRESS. Final Product Owner acceptance: PASS.** Final Live Rooms, responsive/UI hardening, Product Owner real signed-send validation, and independent observation through the official Technocore human interface are accepted. The release remains V1.2.
+
+The complete diff since GitHub commit `c15023336a594160e54ae82264fab88e20d0c773` was audited. Every source, test, specification, ADR, plan, task, and status change belongs to the approved final Rooms viewport, official Technocore-aligned live-read/send reconciliation, runtime timer correction, or responsive/UI hardening work. Dependency manifests are unchanged. Ignored build, test, cache, and log artifacts are excluded. No credential, token, private key, seed, mnemonic, passphrase, Agent backup, environment file, unexpected persistence, telemetry, server signer, write relay, arbitrary proxy, or unrelated source change was found.
+
+Architecture integrity remains PASS: identity and signing stay browser-local; canonical signed bytes and fixed-origin browser-direct write transport are unchanged; nonce reservation/burn and no-same-nonce-retry remain enforced; cursor reads use validated exact `since` with bounded `wait=10`; room switch/visibility/unmount cancellation prevents stale acceptance; authoritative reconciliation still requires exact signed fields plus independent VALID verification; Evidence remains explicit and runtime-only; retained data remains bounded; hostile content remains inert.
+
+**Final clean automated gate:** typecheck PASS; 27/27 unit/integration files and 332/332 tests PASS; ESLint PASS with zero warnings; production build PASS with routes `/`, `/api/inspect`, `/api/rooms`, and framework `/_not-found`; Chromium E2E 20/20 PASS with controlled/intercepted write transport; offline npm audit PASS with 0 vulnerabilities. Automated live Technocore writes: NO.
+
+Deployment state: NOT YET DEPLOYED. Production read verification: NOT YET PERFORMED. Canonical production domain assignment: PENDING availability confirmation for `https://flop-agent.vercel.app`. Production signed-write verification: AWAITING OPTIONAL PRODUCT OWNER PRODUCTION CONFIRMATION. Rollback target before this release is GitHub commit `c15023336a594160e54ae82264fab88e20d0c773`; there is no database, migration, or persisted server data requiring backup.
 
 ## Last verified state
 - Product direction reviewed and approved: Protocol Inspector, evolved from Trust Lens.
@@ -141,10 +153,10 @@ None blocking implementation. Any protocol behavior not explicitly supported by 
   used direct file inspection and command evidence rather than `git diff`/`git status`.
 
 ## Active plan
-`plans/PHASE_42_V12-10_FINAL_REGRESSION_RECONFIRMATION.md` — COMPLETE / PASS.
+`plans/PHASE_46_V12_FINAL_ROOMS_UI_HARDENING.md` — COMPLETE / PASS.
 
 ## Active task
-`tasks/TASK_043_V12-10_FINAL_REGRESSION_RECONFIRMATION.md` — COMPLETE / PASS.
+`tasks/TASK_047_V12_FINAL_ROOMS_UI_HARDENING.md` — COMPLETE / PASS.
 
 ### Release preflight (Vercel) — PAUSED, 2026-09-04
 
@@ -1359,6 +1371,68 @@ State ownership and protected-domain audits PASS. Existing identity, onboarding,
 
 Begin V12-09R Phase R5 — Publish & Read-back Presentation Regression.
 
+### V1.2 Technocore-aligned Rooms rebuild — 2026-09-07
+
+**Status: IMPLEMENTATION COMPLETE; PRODUCT ACCEPTANCE PENDING ONE PRODUCT OWNER REAL SIGNED SEND.** Current official `src/humans.html` was inspected directly. Its room pump performs an initial `since=0` read without wait, then exact `since=<last_seq>&wait=10`; it appends oldest-first results, advances only when records arrive, re-polls immediately after records and normally held empty responses, uses a two-second guard only for a near-instant empty waiter refusal, retries operational failures after three seconds, aborts on room change/hidden state, and restarts the parked read after send. It does not use a cache-busting counter.
+
+The Workbench Rooms core now follows that model through the existing bounded same-origin/fixed-origin reader. The former possible 10-second post-response delay is removed. Current-state refs replace the stale React render snapshot that could replace rather than append cursor batches. Authoritative sequence is the primary dedupe identity; the bounded window remains 200. Exact optimistic reconciliation remains room-bound and requires DID, nonce, post-sweep stored text, signature, and independent VALID verification. A response to the one browser-direct signed GET attempt remains non-proof, no same-nonce retry is added, and the active long poll is restarted after the attempt.
+
+Rooms now renders dense sequence/short-author/message/verdict/relative-server-time rows, compact Public Rooms and lobby fallback, a 44–92 px persistent Enter-to-send composer, near-bottom follow, anchored older reading with unseen count, and click-only technical evidence. Hostile content remains inert. No dependency, API route, persistence, WebSocket/SSE, crawler/archive, server signer/write relay, automatic retry, or automatic Evidence collection was added.
+
+Verification: typecheck PASS; 27/27 unit/integration files and 331/331 tests PASS; ESLint PASS with zero warnings; production build PASS; Chromium E2E 19/19 PASS; offline npm audit PASS with 0 vulnerabilities. A separate real Chromium read-only comparison kept local production and official `/humans#r/lobby` open concurrently for 60 seconds: both sequences advanced, local issued continuous exact cursor `wait=10` reads, no page error occurred, and the observed end positions remained within a small live-stream offset. Screenshots: `artifacts/v12-10-preflight/technocore-aligned-local-60s.png` and `technocore-official-60s.png`.
+
+No live message was written automatically. The required one-message Product Owner/manual signed-send acceptance remains pending, so final product PASS is not yet recorded. No commit, push, release, or deployment occurred.
+
+## Next Exact Action — Technocore-aligned Rooms implementation complete
+
+Product Owner opens local Rooms and official `/humans#r/lobby` side-by-side, manually sends one real signed Workbench message, and confirms optimistic row → one write → authoritative server sequence → VALID reconciliation while the stream continues.
+
+### V1.2 Final Rooms UI + Responsive Hardening — 2026-09-07
+
+**Status: COMPLETE / PASS.** Product Owner confirmed the accepted live engine with real signed messages `#87288` (`hi fam`) and `#87290` (`hello banana`): browser-local signing, one Technocore publish, authoritative observation, VALID verification, optimistic reconciliation, and continued streaming all passed. This hardening did not modify that engine.
+
+The Public Rooms overlap came from accumulated CSS plus an absolutely positioned selected badge sharing insufficient title space with multiple metadata lines. Rows now own independent normal-flow geometry, selected/hover states do not change sizing, long names ellipsize with full title text available, and normal metadata is limited to the room name plus subordinate Recommended/Selected badges. The permanent wide panel is 240 px.
+
+Rooms now uses a named inline-size container. Above 920 px of actual Rooms workspace width it renders `Public Rooms | Live Chat`; at or below 920 px, an already-selected chat receives the full track and Public Rooms becomes a keyboard-focused temporary 240 px panel. At mobile widths the existing single-view list/chat flow remains authoritative. Message rows demote sequence/verdict at 920 px and stack message above compact author/time/menu metadata at 560 px. Ordinary message text explicitly uses normal word breaking and `overflow-wrap: break-word`.
+
+Validation covered 1600×900, 1440×900, 1280×800, 1180×800, 1100×800, 1000×800, 900×800, 800×844, 768×844, 600×844, and 390×844, plus 80/100/125 zoom and continuous width transitions in both directions. Public-room rows did not overlap, selected geometry remained stable, chat stayed readable, composer/details remained accessible, and document horizontal overflow stayed zero. A 51-second read-only live `#lobby` resize run preserved one initial session, continued exact cursor `wait=10` reads, advanced unique sequences, produced no runtime errors, and issued zero writes.
+
+Completion gate: typecheck PASS; 27/27 unit/integration files and 332/332 tests PASS; ESLint PASS with zero warnings; production build PASS with unchanged routes; Chromium E2E 20/20 PASS; offline npm audit PASS with 0 vulnerabilities; protected protocol/security source scan PASS. No dependency, API, persistence, commit, push, release, deployment, or automated Technocore write occurred.
+
+## Next Exact Action — Final Rooms UI hardening complete
+
+Product Owner performs final release review and authorizes the next release action if accepted.
+
+### Final Live Rooms runtime-blocker correction — 2026-09-07
+
+**Status: COMPLETE / PASS.** The browser `Illegal invocation` was caused by storing extracted Web timer methods in the default `TimerHost` and later invoking them with the timer-host object as their receiver. Chromium requires the original browser/global receiver. The scheduler now uses receiver-safe `globalThis.setTimeout(...)` and `globalThis.clearTimeout(...)` wrappers; no exception masking or architecture change was introduced. The initial successful retained read also transitions directly into its first cursor read.
+
+Regression coverage now includes a real Chromium default-scheduler test without the fake clock that previously hid the receiver defect. It verifies initial retained load, an empty held response, later incremental arrival, cursor progression (`undefined → 1 → 1 → 2`), continued next-cycle scheduling, maximum one concurrent read, no `Illegal invocation`, and zero live writes. Existing tests continue to cover room switch/unmount cancellation, visibility pause/resume, operational recovery, optimistic exact-observation reconciliation, nonce safety, and stream continuation.
+
+Real production-mode Chromium observed the actual public `#lobby` read surface for approximately 38 seconds. Five serialized requests advanced through multiple external batches; four sampled bounded windows contained advancing sequences, no duplicate sequence within a window, and no console/page/runtime errors. No live message was published during this validation because automated production writes remain prohibited; pending-to-authoritative reconciliation was verified with controlled E2E transport.
+
+**Completion gate:** typecheck PASS; 27/27 unit/integration files and 329/329 tests PASS; ESLint PASS with zero warnings; production build PASS; Chromium E2E 19/19 PASS; offline npm audit PASS with 0 vulnerabilities. No dependency, protocol, identity, nonce, evidence, persistence, route, commit, push, release, or deployment change occurred.
+
+## Next Exact Action — runtime blocker fixed
+
+Product Owner repeats the Final Live Rooms visual/product acceptance check, then authorizes the next release action only if accepted.
+
+### V1.2 Final Live Rooms amendment — 2026-09-07
+
+**Status: COMPLETE / PASS; Product Owner final visual/product review pending.** This amendment supersedes only the older Rooms-specific manual retained-viewer and visible Review → Sign → Publish → Check normal interaction. AGENTS.md, browser-local identity/backup custody, canonical signing bytes, nonce reservation/burn, publish-attempt ownership, independent verification, Evidence semantics, and fixed-origin security remain authoritative and unchanged.
+
+The selected room now owns one abortable cursor session: initial bounded retained read, exact `last_seq` cursor, then official `since` plus bounded `wait=10` reads. Room switch, mobile Back, workspace exit, hidden visibility, and unmount abort/invalidate stale work. Successful records merge incrementally by authoritative identity into a 200-record current window; overlap is deduplicated and operational failure preserves the last successful view. Explicitly held reads reconnect, while `wait_held:false` or absent metadata backs off conservatively.
+
+Rooms uses dense horizontal rows and progressive cryptographic details, opens at newest, follows only when near newest, preserves an older-reading anchor, and provides a deduplicated 1–99/99+ jump counter. The compact composer supports Enter send, Shift+Enter newline, bounded auto-grow, draft clearing, and focus restoration. No-Agent and backup-required states remain compact read-capable gates. No general Rooms message-length limit was introduced.
+
+Ready-agent sending reuses the single existing page-runtime identity, `SessionNonceReservations`, and `PublishAttemptSession`; it signs locally and performs one browser-direct fixed-origin publish attempt. No automatic retry occurs. Response receipt remains unverified/ambiguous. An optimistic row reconciles only when exact DID, nonce, swept text, signature, and independent VALID evidence are authoritatively observed. Evidence addition remains explicit; hostile content remains inert.
+
+**Completion gate:** typecheck PASS; 27/27 unit/integration files and 329/329 tests PASS; ESLint PASS with zero warnings; production build PASS with unchanged routes (`/`, `/api/inspect`, `/api/rooms`, framework `/_not-found`); Chromium E2E 18/18 PASS; offline npm audit PASS with 0 vulnerabilities. Rendered review passed at desktop 1440×900, zoom-equivalent 80/100/125 viewports, and mobile 390×844 with bounded history, reachable composer/actions, progressive details, keyboard/focus behavior, and zero measured page-level horizontal overflow. No automated live Technocore write, dependency, persistence, new route, server write relay, WebSocket/SSE, crawler/archive, commit, push, release, or deployment occurred.
+
+## Next Exact Action — Final Live Rooms complete
+
+Product Owner performs final visual/product review of V1.2 Final Live Rooms and authorizes the next release action only if accepted.
+
 ### Phase 42 (V12-10) — Final Regression Reconfirmation & Release Preflight, 2026-09-06
 
 **Status: COMPLETE / PASS.** This is a fresh verification of the current post-V12-09R repository; the historical earlier V12-10 evidence was not reused as the completion basis.
@@ -1386,6 +1460,18 @@ Release: **READY FOR PRODUCT-OWNER DEPLOYMENT DECISION.** Deployment: **NOT DEPL
 ## Next Exact Action — V12-10 complete
 
 Product Owner decides whether to deploy FLOP Agent Workbench V1.2 or begin V1.3 architecture planning.
+
+### V1.2 Rooms chat viewport production UX patch — 2026-09-06
+
+**Status: COMPLETE / PASS.** The selected-room workspace now uses a bounded conversation viewport above the existing persistent compact composer. Retained messages render chronologically while the underlying bounded newest-first adapter and 200-message model remain unchanged. Initial room selection and room switches open at the newest retained message. Near-bottom readers continue following refresh results; readers positioned higher remain anchored to the same measured message position and receive a deduplicated unseen counter showing exact 1–99 and then `99+`. The room list and conversation scroll independently. The ready textarea grows to roughly four lines before scrolling internally, and the mandatory backup gate is compact while retaining its route to the existing backup flow.
+
+The existing R4A stale-read protection, R4B serialized five-second visibility-aware scheduler, room-bound draft/review state, browser-local signing, nonce reservation/burn, explicit publish, explicit read-back, and Evidence actions remain authoritative and unchanged. No API, dependency, persistence, WebSocket, SSE, archive, automatic publication verification, or live Technocore write was added.
+
+Validation: typecheck PASS; 26/26 unit/integration files and 325/325 tests PASS; ESLint PASS with zero warnings; production build PASS with unchanged routes; Chromium E2E 18/18 PASS at 1440×900, 80%/100%/125% viewport-scale equivalents, and 390×844. Deployment, commit, and push were not performed.
+
+## Next Exact Action — Rooms chat viewport patch complete
+
+Product Owner reviews the V1.2 Rooms chat viewport patch and authorizes a patch commit/push and deployment when ready.
 
 ### Phase 41 (V12-09R) — Final Product Pass, 2026-09-06
 

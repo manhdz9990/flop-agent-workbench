@@ -12,6 +12,7 @@ export interface RoomReadPayload {
   readonly lastSeq: string;
   readonly generation?: string;
   readonly messages: readonly ProtocolRecord[];
+  readonly waitHeld?: boolean;
 }
 
 export interface LiveInspection {
@@ -27,6 +28,9 @@ export interface ReaderOptions {
   readonly fetch?: typeof fetch;
   readonly timeoutMs?: number;
   readonly maxResponseBytes?: number;
+  readonly since?: string;
+  readonly waitSeconds?: number;
+  readonly signal?: AbortSignal;
 }
 
 /**

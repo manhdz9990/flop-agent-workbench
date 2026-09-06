@@ -18,10 +18,14 @@ export function validateSequence(sequence: string): string {
   return sequence;
 }
 
-export function buildRoomReadUrl(room: string): URL {
+export function buildRoomReadUrl(room: string, since?: string, waitSeconds?: number): URL {
   validateRoomName(room);
+  if (since !== undefined) validateSequence(since);
+  if (waitSeconds !== undefined && (!Number.isInteger(waitSeconds) || waitSeconds < 0 || waitSeconds > 10 || since === undefined)) throw new InputValidationError("INVALID_SEQUENCE", "Room wait must be an integer from 0 to 10 and requires a sequence cursor.");
   const url = new URL(`/r/${room}`, TECHNOCORE_ORIGIN);
   url.searchParams.set("format", "json");
   url.searchParams.set("limit", "200");
+  if (since !== undefined) url.searchParams.set("since", since);
+  if (waitSeconds !== undefined) url.searchParams.set("wait", String(waitSeconds));
   return url;
 }

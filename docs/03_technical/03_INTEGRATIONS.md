@@ -38,5 +38,9 @@ Protocol-sensitive implementation must be checked against:
 - https://github.com/flop-labs/technocore-chat
 - https://github.com/flop-labs/tclk
 
+## V1.2 Final Live Rooms read amendment
+
+For the explicitly selected room, the approved reader follows the current official `/humans` pump: first perform the bounded retained JSON read (`format=json&limit=200`, cursor zero/no wait), then request only newer records with `since=<exact last_seq>&wait=10`. `since` is an exact validated sequence string; it is never converted to a JavaScript number. Responses append by authoritative sequence into a bounded 200-record current view. Record responses and normally held empty responses immediately start the next poll; only a near-instant empty response uses the official two-second waiter-exhaustion guard, and operational errors retry after three seconds. Empty responses retain the cursor. Abort/revision ownership cancels room switch, hidden-tab, send restart, exit, and unmount reads. No cache-busting parameter is used because the inspected official client does not use one. All traffic still passes through the same-origin typed route and fixed-origin safe reader; no arbitrary proxy or server write relay is added.
+
 ## tclk
 Use official package/spec only where its public interface and semantics are verified at implementation time. No settlement rail integration in MVP.

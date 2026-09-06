@@ -33,12 +33,13 @@ describe("V12-08D combined integration and security boundaries", () => {
   });
 
   it("keeps preview, signing, publish, and read-back on that shared lifecycle", () => {
-    for (const source of [onboarding, rooms]) {
-      expect(source).toMatch(/reservations\.previewNext/);
-      expect(source).toMatch(/prepareSignedMessage\([^]*reservations/);
-      expect(source).toMatch(/publishPreparedMessage\(prepared, attempts\)/);
-      expect(source).toMatch(/verifyPublishedReadback\(\{ prepared, attempts \}\)/);
-    }
+    expect(onboarding).toMatch(/reservations\.previewNext/);
+    expect(onboarding).toMatch(/prepareSignedMessage\([^]*reservations/);
+    expect(onboarding).toMatch(/publishPreparedMessage\(prepared, attempts\)/);
+    expect(onboarding).toMatch(/verifyPublishedReadback\(\{ prepared, attempts \}\)/);
+    expect(rooms).toMatch(/activeIdentity\.prepareSignedMessage\([^]*reservations/);
+    expect(rooms).toMatch(/publishPreparedMessage\(signed, attempts\)/);
+    expect(rooms).toMatch(/message\.verdict === "VALID"[^]*message\.signature === item\.prepared!\.signature/);
   });
 
   it("contains no persistence, unsafe HTML sink, background network loop, or sensitive logging", () => {

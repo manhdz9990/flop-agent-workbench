@@ -10,6 +10,8 @@ export interface RoomConversationMessage {
   readonly text: string;
   readonly sequence?: string;
   readonly nonce?: string;
+  readonly signature?: string;
+  readonly timestamp?: string;
   readonly verdict: VerificationState;
 }
 
@@ -44,6 +46,8 @@ export function buildRoomConversation(messages: readonly MessageEvidence[]): rea
       ? sequenceValue
       : typeof sequenceValue === "number" && Number.isSafeInteger(sequenceValue) ? String(sequenceValue) : undefined;
     const nonce = exactText(value(message.fields, "nonce"));
+    const signature = exactText(value(message.fields, "signature"));
+    const timestamp = exactText(value(message.fields, "ts"));
     return [{
       index,
       writer,
@@ -51,6 +55,8 @@ export function buildRoomConversation(messages: readonly MessageEvidence[]): rea
       text,
       ...(sequence === undefined ? {} : { sequence }),
       ...(nonce === undefined ? {} : { nonce }),
+      ...(signature === undefined ? {} : { signature }),
+      ...(timestamp === undefined ? {} : { timestamp }),
       verdict: message.verificationState,
     }];
   });

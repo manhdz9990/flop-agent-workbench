@@ -2,7 +2,7 @@ import type { EvidenceField, OperationalError, TrustReport } from "../domain";
 import type { ReaderOptions } from "../live";
 
 export type InspectionInput =
-  | { readonly kind: "ROOM"; readonly room: string }
+  | { readonly kind: "ROOM"; readonly room: string; readonly since?: string; readonly wait?: number }
   | { readonly kind: "MESSAGE"; readonly room: string; readonly sequence: string }
   | { readonly kind: "DID"; readonly did: string }
   | { readonly kind: "EXPORT" };

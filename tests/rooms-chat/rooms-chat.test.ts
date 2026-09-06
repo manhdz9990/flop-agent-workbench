@@ -15,11 +15,12 @@ describe("V12-08A Rooms / Chat adapter", () => {
   it("presents usable observed sequences newest-first and distinguishes signed DIDs from unsigned nicknames", () => {
     const conversation = buildRoomConversation([
       message("UNSIGNED", { from: "alice", text: "first", seq: "7" }),
-      message("VALID", { from: "did:key:z6MkWriter", text: "second", seq: "8", nonce: "9007199254740993" }),
+      message("VALID", { from: "did:key:z6MkWriter", text: "second", seq: "8", nonce: "9007199254740993", signature: "exact-signature" }),
     ]);
     expect(conversation.map((item) => item.text)).toEqual(["second", "first"]);
     expect(conversation.map((item) => item.writerKind)).toEqual(["SIGNED_DID_KEY", "UNSIGNED_NICKNAME"]);
     expect(conversation.map((item) => item.verdict)).toEqual(["VALID", "UNSIGNED"]);
+    expect(conversation[0]?.signature).toBe("exact-signature");
   });
 
   it("compares 19-digit sequences exactly and keeps equal or unusable evidence deterministic", () => {
@@ -68,63 +69,67 @@ describe("V12-08A Rooms / Chat adapter", () => {
     expect(highestObservedNonceForDid(conversation, did)).toBe("9999999999999999998");
   });
 
-  it("keeps lifecycle and security behavior in existing adapters with manual actions only", () => {
+  it("uses the official cursor pump while preserving fixed-origin local signing", () => {
     const source = readFileSync(new URL("../../app/rooms-chat.tsx", import.meta.url), "utf8");
-    expect(source).toMatch(/publishPreparedMessage\(prepared, attempts\)/);
-    expect(source).toMatch(/verifyPublishedReadback\(\{ prepared, attempts \}\)/);
+    expect(source).toMatch(/publishPreparedMessage\(signed, attempts\)/);
     expect(source).toMatch(/activeIdentity\.prepareSignedMessage/);
     expect(source).toContain('fetch("/api/rooms")');
-    expect(source).toContain('body: JSON.stringify({ kind: "ROOM", room })');
+    expect(source).toContain('{ since: cursor, wait: 10 }');
+    expect(source).toContain("SelectedRoomLiveSession");
+    expect(source).toContain("liveSession.current?.restart()");
     expect(source).not.toMatch(/setInterval|WebSocket|EventSource|dangerouslySetInnerHTML|localStorage|sessionStorage|indexedDB|document\.cookie/);
-    expect(source).not.toMatch(/href=.*(?:message\.text|room\.topic|room\.room)/);
-    expect(source).not.toMatch(/api\/(?:publish|write)|method:\s*"POST"[^]*say-signed/);
+    expect(source).not.toMatch(/href=.*(?:message\.text|item\.topic|item\.room)/);
   });
 
-  it("presents the Phase 5 conversational hierarchy and explicit publish confirmation", () => {
+  it("merges authoritative records from current state and reconciles exact swept signed evidence", () => {
     const source = readFileSync(new URL("../../app/rooms-chat.tsx", import.meta.url), "utf8");
-    for (const copy of ["Choose a room to read its bounded retained conversation", "Room discovery remains manual", "Choose a room", "Select a public room to read its retained conversation.", "Write to", "Review before signing", "Technical signing details", "Signed locally", "Publish to #", "Publish request completed", "Published and verified", "View Receipt"]) expect(source).toContain(copy);
-    expect(source).toContain("setPublishConfirm(true)");
-    expect(source).toContain("Added to Evidence");
-    expect(source).not.toMatch(/setInterval|WebSocket|EventSource|dangerouslySetInnerHTML/);
+    expect(source).toContain("const current = messagesRef.current");
+    expect(source).toContain("message.verdict === \"VALID\"");
+    for (const field of ["message.writer === item.prepared!.did", "message.nonce === item.prepared!.nonce", "message.signature === item.prepared!.signature", "message.text === item.prepared!.text"]) expect(source).toContain(field);
+    expect(source).toContain(".slice(0, 200)");
   });
 
-  it("keeps R3 reads explicit, manual, and within the existing routes", () => {
+  it("keeps a bounded follow-newest viewport and progressive message details", () => {
     const source = readFileSync(new URL("../../app/rooms-chat.tsx", import.meta.url), "utf8");
-    for (const copy of ["Loading public rooms…", "No public rooms were observed in this bounded response.", "Public rooms unavailable", "Try Again", "Direct Room Access", "Retained conversation · Auto-refresh on", "Retained data is not complete history.", "Back to rooms", "SIGNED ·", "Self-asserted nickname"]) expect(source).toContain(copy);
-    expect(source).toContain('onClick={() => selectRoom("lobby")}');
-    expect(source).toContain('body: JSON.stringify({ kind: "ROOM", room })');
-    expect(source).not.toMatch(/setInterval|WebSocket|EventSource|dangerouslySetInnerHTML/);
+    const styles = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
+    for (const marker of ['className="conversation-viewport"', "[...messages].reverse().map", "viewport.scrollTop = viewport.scrollHeight", "pendingScrollAnchor.current", 'className="message-details"', "Open details for message"]) expect(source).toContain(marker);
+    expect(source).toContain('newMessageCount > 99 ? "99+" : newMessageCount');
+    expect(styles).toMatch(/\.conversation-viewport\{[^}]*overflow-y:auto/);
+    expect(styles).toMatch(/\.chat-message\{[^}]*grid-template-columns:80px 106px/);
+    expect(styles).toMatch(/\.message-details\[open\]/);
   });
 
-  it("requires explicit room selection and resets the transient draft when switching rooms", () => {
+  it("presents a minimal direct composer without a new general message limit", () => {
     const source = readFileSync(new URL("../../app/rooms-chat.tsx", import.meta.url), "utf8");
-    expect(source).toContain("const [selectedRoom, setSelectedRoom] = useState<string>();");
-    expect(source).toContain('setSelectedRoom(room); setSelectedRoomRead(false); setMessages([]); setText("");');
-    expect(source).toContain("{selectedRoom && <>");
+    for (const copy of ["Read-only conversation", "Create or Import Agent", "Composer locked", "Secure Backup", "Message #", "Send", "character", "Shift"]) {
+      if (copy !== "Shift") expect(source).toContain(copy);
+    }
+    expect(source).toContain('event.key === "Enter" && !event.shiftKey');
+    expect(source).toContain("Math.min(composer.current.scrollHeight, 92)");
+    expect(source).not.toMatch(/maxLength|4096|text\.slice|text\.substring|Review Message|Check publication/);
+  });
+
+  it("keeps room selection explicit and direct lobby fallback compact", () => {
+    const source = readFileSync(new URL("../../app/rooms-chat.tsx", import.meta.url), "utf8");
+    for (const copy of ["Choose a room", "No room is read", "direct-room-choice", 'selectRoom("lobby")', "Back to rooms", "Retained data is not complete history."]) expect(source).toContain(copy);
+    expect(source).not.toContain("Direct Room Access");
     expect(source).not.toMatch(/initialRoom|ExplicitInitialRoomRead/);
   });
 
-  it("maps existing identity readiness to the three R4 composer presentations", () => {
+  it("hardens room-row containment and collapses secondary navigation by actual workspace width", () => {
     const source = readFileSync(new URL("../../app/rooms-chat.tsx", import.meta.url), "utf8");
-    for (const copy of [
-      "Read-only conversation",
-      "Create or import an Agent to sign and publish to this room. Reading retained messages remains available.",
-      "Create or Import Agent",
-      "Never enter private keys, seeds, passphrases, passwords, tokens, or backup files here.",
-      "Composer locked",
-      "Secure backup to sign and publish.",
-      "Secure Backup",
-      "Write a message",
-      "Messages are public and untrusted after publication. Retained history may be incomplete.",
-      "Do not enter private keys, seeds, passphrases, passwords, tokens, or backup content.",
-      "Review Message",
-      "Sign locally",
-      "Edit Message",
-      "This message has not been published.",
-      "Publishing is not proof of verification.",
-    ]) expect(source).toContain(copy);
-    expect(source).toContain("Array.from(text).length");
-    expect(source).toMatch(/characterCount === 1 \? "character" : "characters"/);
-    expect(source).not.toMatch(/maxLength|4096|characterCount\s*(?:>=|<=|>|<)|text\.slice|text\.substring/);
+    const styles = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
+    expect(source).toContain("roomsPanelOpen");
+    expect(source).toContain("rooms-panel-toggle");
+    expect(source).toContain("rooms-panel-close");
+    expect(source).toContain("setRoomsPanelOpen(false)");
+    expect(styles).toContain("container:rooms-workspace / inline-size");
+    expect(styles).toContain("grid-template-columns:240px minmax(0,1fr)");
+    expect(styles).toContain("@container rooms-workspace (max-width:920px)");
+    expect(styles).toMatch(/\.room-choice,.room-choice\.selected\{[^}]*height:auto[^}]*overflow:hidden/);
+    expect(styles).toMatch(/\.room-choice\.selected::after\{content:none/);
+    expect(styles).toMatch(/\.room-choice-title strong\{[^}]*text-overflow:ellipsis[^}]*white-space:nowrap/);
+    expect(styles).toMatch(/\.message-content\{[^}]*word-break:normal[^}]*overflow-wrap:break-word/);
+    expect(styles).toMatch(/\.room-choice,.room-choice\.selected\{[^}]*min-height:36px[^}]*height:auto/);
   });
 });

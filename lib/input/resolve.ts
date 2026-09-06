@@ -13,6 +13,7 @@ function serverMetadata(value: RoomReadPayload): readonly EvidenceField[] {
     { name: "first_seq", value: value.firstSeq, authority: "SERVER_ASSERTED_UNSIGNED" },
     { name: "last_seq", value: value.lastSeq, authority: "SERVER_ASSERTED_UNSIGNED" },
     ...(value.generation === undefined ? [] : [{ name: "generation", value: value.generation, authority: "SERVER_ASSERTED_UNSIGNED" as const }]),
+    ...(value.waitHeld === undefined ? [] : [{ name: "wait_held", value: value.waitHeld, authority: "SERVER_ASSERTED_UNSIGNED" as const }]),
   ];
 }
 
@@ -35,12 +36,12 @@ export function inspectDid(did: string): DidInspection {
   }
 }
 
-async function resolveRoomInspection(room: string, kind: "ROOM" | "MESSAGE", sequence: string | undefined, options: ResolveOptions): Promise<InputResolution> {
+async function resolveRoomInspection(room: string, kind: "ROOM" | "MESSAGE", sequence: string | undefined, options: ResolveOptions, since?: string, wait?: number): Promise<InputResolution> {
   if (sequence !== undefined) {
     try { validateSequence(sequence); }
     catch (cause) { return { ok: false, error: operational(cause instanceof InputValidationError ? cause.code : "INVALID_SEQUENCE", cause instanceof Error ? cause.message : "Message sequence is invalid.") }; }
   }
-  const read = await readRoom(room, options.reader);
+  const read = await readRoom(room, { ...options.reader, ...(since === undefined ? {} : { since }), ...(wait === undefined ? {} : { waitSeconds: wait }) });
   if (!read.ok) return read;
   const records = sequence === undefined ? read.value.messages : read.value.messages.filter((record) => String(record.seq) === sequence);
   if (sequence !== undefined && records.length === 0) return { ok: false, error: operational("MESSAGE_NOT_OBSERVED", "The requested sequence was not present in the bounded room window; its retention status cannot be determined from this response.") };
@@ -53,7 +54,7 @@ async function resolveRoomInspection(room: string, kind: "ROOM" | "MESSAGE", seq
 
 export async function resolveInspectionInput(input: InspectionInput, options: ResolveOptions = {}): Promise<InputResolution> {
   switch (input.kind) {
-    case "ROOM": return resolveRoomInspection(input.room, "ROOM", undefined, options);
+    case "ROOM": return resolveRoomInspection(input.room, "ROOM", undefined, options, input.since, input.wait);
     case "MESSAGE": return resolveRoomInspection(input.room, "MESSAGE", input.sequence, options);
     case "DID": return { ok: true, kind: "DID", value: inspectDid(input.did) };
     case "EXPORT": return { ok: false, error: operational("LOCAL_EXPORT_REQUIRED", "EXPORT input is handled only by the local export pipeline.") };

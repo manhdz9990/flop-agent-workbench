@@ -51,13 +51,13 @@ describe("V12-08C runtime evidence model", () => {
     const onboarding = readFileSync(new URL("../../app/onboarding.tsx", import.meta.url), "utf8");
     const rooms = readFileSync(new URL("../../app/rooms-chat.tsx", import.meta.url), "utf8");
     const onboardingPublish = onboarding.slice(onboarding.indexOf("async function publish"), onboarding.indexOf("async function check"));
-    const roomsPublish = rooms.slice(rooms.indexOf("async function publish"), rooms.indexOf("async function checkPublication"));
+    const roomsPublish = rooms.slice(rooms.indexOf("async function sendMessage"), rooms.indexOf("function composerKeyDown"));
     expect(onboardingPublish).not.toContain("onEvidenceObserved");
     expect(roomsPublish).not.toContain("onEvidenceObserved");
     expect(onboarding).toMatch(/function addVerifiedEvidence[\s\S]*createVerifiedPublicationEvidence\(prepared, readback\)/);
-    expect(rooms).toMatch(/function addVerifiedEvidence[\s\S]*createVerifiedPublicationEvidence\(prepared, readback\)/);
+    expect(rooms).toMatch(/function addEvidence[\s\S]*createRoomObservedEvidence\(room, message\)/);
     expect(onboarding.slice(onboarding.indexOf("async function check"), onboarding.indexOf("function addVerifiedEvidence"))).not.toContain("onEvidenceObserved");
-    expect(rooms.slice(rooms.indexOf("async function checkPublication"), rooms.indexOf("if (showReceipt"))).not.toContain("onEvidenceObserved");
+    expect(roomsPublish).not.toContain("onEvidenceObserved");
   });
 
   it("preserves exact room-observation verdicts and hostile public fields as inert values", () => {

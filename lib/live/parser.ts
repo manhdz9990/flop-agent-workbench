@@ -66,5 +66,7 @@ export function parseRoomReadJson(input: string, expectedRoom: string): RoomRead
   if (value.count !== messages.length) throw new LiveResponseError("UNSUPPORTED_RESPONSE", "Technocore response count does not match its message array.");
   const generation = value.generation === undefined ? undefined : isSequence(value.generation) ? String(value.generation) : null;
   if (generation === null) throw new LiveResponseError("UNSUPPORTED_RESPONSE", "Technocore returned invalid generation metadata.");
-  return { room: expectedRoom, count: value.count, firstSeq, lastSeq: String(value.last_seq), ...(generation === undefined ? {} : { generation }), messages: messages as ProtocolRecord[] };
+  const waitHeld = value.wait_held === undefined ? undefined : typeof value.wait_held === "boolean" ? value.wait_held : null;
+  if (waitHeld === null) throw new LiveResponseError("UNSUPPORTED_RESPONSE", "Technocore returned invalid wait metadata.");
+  return { room: expectedRoom, count: value.count, firstSeq, lastSeq: String(value.last_seq), ...(generation === undefined ? {} : { generation }), ...(waitHeld === undefined ? {} : { waitHeld }), messages: messages as ProtocolRecord[] };
 }

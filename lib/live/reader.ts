@@ -25,11 +25,13 @@ async function readBoundedBody(response: Response, maxBytes: number): Promise<st
 
 export async function readRoom(room: string, options: ReaderOptions = {}): Promise<ReadResult<RoomReadPayload>> {
   let url: URL;
-  try { url = buildRoomReadUrl(room); }
+  try { url = buildRoomReadUrl(room, options.since, options.waitSeconds); }
   catch (cause) { return { ok: false, error: operational(cause instanceof InputValidationError ? cause.code : "INVALID_INPUT", cause instanceof Error ? cause.message : "Room input is invalid.") }; }
   const fetcher = options.fetch ?? fetch;
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? LIVE_REQUEST_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? (options.waitSeconds === undefined ? LIVE_REQUEST_TIMEOUT_MS : (options.waitSeconds + 2) * 1_000));
+  const abortFromCaller = () => controller.abort();
+  options.signal?.addEventListener("abort", abortFromCaller, { once: true });
   try {
     const response = await fetcher(url, { method: "GET", redirect: "manual", signal: controller.signal, headers: { accept: "application/json" } });
     if (response.status >= 300 && response.status < 400) return { ok: false, error: operational("REDIRECT_REJECTED", "Technocore redirects are rejected by the safe reader.") };
@@ -46,5 +48,5 @@ export async function readRoom(room: string, options: ReaderOptions = {}): Promi
     if (cause instanceof LiveResponseError) return { ok: false, error: operational(cause.code === "MALFORMED_RESPONSE" ? "MALFORMED_RESPONSE" : "UNSUPPORTED_RESPONSE", cause.message) };
     if (controller.signal.aborted) return { ok: false, error: operational("NETWORK_TIMEOUT", "The Technocore read timed out.") };
     return { ok: false, error: operational("NETWORK_FAILURE", "The Technocore read failed.") };
-  } finally { clearTimeout(timeout); }
+  } finally { clearTimeout(timeout); options.signal?.removeEventListener("abort", abortFromCaller); }
 }

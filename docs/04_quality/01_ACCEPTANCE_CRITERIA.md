@@ -143,6 +143,19 @@ The following are phase-definition constraints, not completed acceptance claims:
 ## V12-08D Integration & Security Regression completion
 
 105. One Home-owned identity and one page-runtime nonce/publish lifecycle are authoritative across Onboarding, Rooms, My Agent, and Evidence association.
+
+## Final Live Rooms amendment
+
+106. The older Rooms-only manual-refresh and visible Review → Sign → Publish → Check normal interaction is superseded; all non-Rooms security and evidence requirements remain authoritative.
+107. The selected room follows the official `/humans` initial-tail then `since=<last_seq>&wait=10` cursor pump, immediately re-polling after records and normally held empty responses, with only the official near-instant-empty hot-loop guard.
+108. Authoritative records append from current state and deduplicate by sequence; room switches, hidden tabs, send restarts, exit, and unmount cannot accept stale work.
+109. A sent optimistic row reconciles only against exact room, DID, nonce, post-sweep stored text, signature, and independent VALID evidence; a write response alone never verifies publication.
+110. Normal Rooms presentation is dense chat, with relative server time, click-only details, a compact direct-lobby fallback, and a persistent compact Enter-to-send composer without a new general message-length limit.
+107. One selected-room cursor session performs initial retained load and bounded `since`/`wait` reads, aborts stale work, pauses hidden work, reconnects safely, deduplicates overlap, and retains at most 200 records.
+108. The stream opens at newest, follows only near newest, preserves older-reading position, and exposes a deduplicated 1–99/99+ jump counter.
+109. Enter sends and Shift+Enter inserts a newline; no-Agent and unverified-backup states remain compact read-capable gates; no general Rooms length limit exists.
+110. Sending uses only the existing browser-local identity, nonce reservations, publish-attempt owner, and fixed-origin transport. It never automatically retries a nonce and never treats response receipt or network failure as cryptographic verification/INVALID.
+111. An optimistic row reconciles without duplication only when the exact authoritative DID, nonce, post-sweep text, signature, and independent VALID evidence are observed. Evidence collection remains explicit and hostile content remains inert.
 106. Navigation, Lock, and identity replacement cannot discard reservation/burn history or restore stale signing capability; refresh clears runtime identity and Evidence.
 107. Exact BigInt/string nonce selection remains `max(currentUnixMilliseconds, highestObservedNonce + 1, highestSessionNonce + 1)` per DID+room, with reservation before signing and irreversible burn before fetch.
 108. Backup crypto, canonical payload/signature behavior, explicit-only fixed-origin publishing, ambiguity, exact read-back qualification, evidence verdicts, 12-stage diagnostics, receipts, and tclk semantics remain unchanged.

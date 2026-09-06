@@ -22,7 +22,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (!isLiveInspection(input)) {
     return NextResponse.json({ ok: false, error: { code: "UNSUPPORTED_INPUT", message: "Only Room and Message reads are accepted by this endpoint." } }, { status: 400 });
   }
-  return NextResponse.json(await resolveInspectionInput(input));
+  return NextResponse.json(await resolveInspectionInput(input, { reader: { signal: request.signal } }));
 }
 
 async function readBoundedBody(request: Request): Promise<string | undefined> {
@@ -45,6 +45,8 @@ async function readBoundedBody(request: Request): Promise<string | undefined> {
 function isLiveInspection(value: unknown): value is Extract<InspectionInput, { kind: "ROOM" | "MESSAGE" }> {
   if (typeof value !== "object" || value === null) return false;
   const candidate = value as Record<string, unknown>;
-  if (candidate.kind === "ROOM") return typeof candidate.room === "string";
+  if (candidate.kind === "ROOM") return typeof candidate.room === "string"
+    && (candidate.since === undefined || typeof candidate.since === "string")
+    && (candidate.wait === undefined || typeof candidate.wait === "number");
   return candidate.kind === "MESSAGE" && typeof candidate.room === "string" && typeof candidate.sequence === "string";
 }

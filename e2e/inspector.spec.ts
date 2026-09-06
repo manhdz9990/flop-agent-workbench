@@ -37,7 +37,7 @@ test("first-time Home presents the single-shell real-state dashboard", async ({ 
   expect(discoveryRequests).toHaveLength(0);
   await page.getByRole("button", { name: "Open Rooms →" }).click();
   await expect(page.getByRole("heading", { name: "Choose a room", exact: true })).toBeVisible();
-  await expect(page.getByText("Select a public room to read its retained conversation.")).toBeVisible();
+  await expect(page.getByText("Select a public room to open its chat stream.")).toBeVisible();
   await expect(page.locator(".composer")).toHaveCount(0);
   expect(inspectRequests).toHaveLength(0);
   expect(discoveryRequests).toHaveLength(0);
@@ -86,22 +86,23 @@ test("R4A requires explicit discovered-room selection and supports switching on 
   await page.getByRole("button", { name: "Load rooms" }).click();
   await expect(page.locator(".room-choice")).toHaveCount(2);
   await expect(page.locator(".room-choice").first()).toContainText("# lobby");
-  await expect(page.locator(".room-choice").first()).toContainText("Recommended · discovered");
+  await expect(page.locator(".room-choice").first()).toContainText("Recommended");
   expect(discoveryCount).toBe(1);
   expect(reads).toEqual([]);
 
+  if (await page.locator(".rooms-panel-toggle").isVisible()) await page.locator(".rooms-panel-toggle").click();
   await page.locator(".room-choice").filter({ hasText: "# garden" }).click();
   await expect(page.locator(".conversation-heading").getByRole("heading", { name: "# garden" })).toBeVisible();
   await expect(page.getByText("garden retained message")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Read-only conversation" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Write to #garden" })).toHaveCount(0);
-  expect(reads).toEqual(["garden"]);
+  expect(reads.slice(0, 2)).toEqual(["garden", "garden"]);
 
   await page.locator(".room-choice").filter({ hasText: "# lobby" }).click();
   await expect(page.locator(".conversation-heading").getByRole("heading", { name: "# lobby" })).toBeVisible();
   await expect(page.getByText("lobby retained message")).toBeVisible();
   await expect(page.getByText("garden retained message")).toHaveCount(0);
-  expect(reads).toEqual(["garden", "lobby"]);
+  expect(reads.slice(-2)).toEqual(["lobby", "lobby"]);
   await page.screenshot({ path: "artifacts/v12-10-preflight/r4a-desktop-selected-lobby.png", fullPage: true });
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -113,7 +114,7 @@ test("R4A requires explicit discovered-room selection and supports switching on 
   await expect(page.locator(".conversation-heading").getByRole("heading", { name: "# garden" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Back to rooms" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(await page.evaluate(() => document.documentElement.clientWidth));
-  expect(reads).toEqual(["garden", "lobby", "garden"]);
+  expect(reads.slice(-2)).toEqual(["garden", "garden"]);
   await page.screenshot({ path: "artifacts/v12-10-preflight/r4a-mobile-selected-garden.png", fullPage: true });
 });
 
@@ -126,40 +127,144 @@ test("R4B auto-refresh is serialized, visibility-aware, recoverable, and read-on
   await page.route("**/api/inspect", (route) => {
     readCount += 1;
     if (failNext) { failNext = false; return route.fulfill({ json: { ok: false, error: { code: "NETWORK_FAILURE", message: "temporary read failure" } } }); }
-    return route.fulfill({ json: liveResolution("ROOM", [{ from: "observer", text: `bounded view ${readCount}`, seq: String(readCount) }]) });
+    const input = route.request().postDataJSON() as { since?: string };
+    return route.fulfill({ json: liveResolution("ROOM", input.since ? [] : [{ from: "observer", text: "bounded view 1", seq: "1" }], "1", true) });
   });
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
   await page.getByRole("button", { name: "Rooms", exact: true }).click();
   await page.getByRole("button", { name: "Open lobby →" }).click();
   await expect(page.getByText("bounded view 1")).toBeVisible();
-  await expect(page.getByText("Retained conversation · Auto-refresh on")).toBeVisible();
-  await page.clock.fastForward(4_999);
-  expect(readCount).toBe(1);
-  await page.clock.fastForward(1);
-  await expect(page.getByText("bounded view 2")).toBeVisible();
+  await expect(page.getByText("Live · retained window")).toBeVisible();
 
   failNext = true;
-  await page.clock.fastForward(5_000);
-  await expect(page.getByText("bounded view 2")).toBeVisible();
-  await expect(page.getByText("Refresh unavailable", { exact: true })).toBeVisible();
+  await page.clock.fastForward(2_000);
+  await expect(page.getByText("bounded view 1")).toBeVisible();
+  await expect(page.getByText("Live read unavailable", { exact: true })).toBeVisible();
   await expect(page.getByText("temporary read failure")).toBeVisible();
-  await page.clock.fastForward(5_000);
-  await expect(page.getByText("bounded view 4")).toBeVisible();
-  await expect(page.getByText("Refresh unavailable", { exact: true })).toHaveCount(0);
   await page.screenshot({ path: "artifacts/v12-10-preflight/r4b-desktop-auto-refresh.png", fullPage: true });
 
   await page.evaluate(() => { Object.defineProperty(document, "visibilityState", { configurable: true, value: "hidden" }); document.dispatchEvent(new Event("visibilitychange")); });
+  const readsWhenHidden = readCount;
   await page.clock.fastForward(20_000);
-  expect(readCount).toBe(4);
+  expect(readCount).toBe(readsWhenHidden);
   await page.evaluate(() => { Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" }); document.dispatchEvent(new Event("visibilitychange")); });
-  await expect(page.getByText("bounded view 5")).toBeVisible();
+  await expect.poll(() => readCount).toBeGreaterThan(readsWhenHidden);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("button", { name: "Back to rooms" }).click();
+  const readsWhenStopped = readCount;
   await page.clock.fastForward(20_000);
-  expect(readCount).toBe(5);
+  expect(readCount).toBe(readsWhenStopped);
   expect(writes).toBe(0);
   await page.screenshot({ path: "artifacts/v12-10-preflight/r4b-mobile-room-list-stopped.png", fullPage: true });
+});
+
+test("Live Rooms default browser scheduler continues empty polls and appends a later arrival", async ({ page }) => {
+  const pageErrors: string[] = [];
+  const requestBodies: Array<{ room: string; since?: string; wait?: number }> = [];
+  let activeReads = 0;
+  let maximumConcurrentReads = 0;
+  let writes = 0;
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.route("https://technocore.chat/**", (route) => { writes += 1; return route.abort(); });
+  await page.route("**/api/inspect", async (route) => {
+    const body = route.request().postDataJSON() as { room: string; since?: string; wait?: number };
+    requestBodies.push(body);
+    activeReads += 1;
+    maximumConcurrentReads = Math.max(maximumConcurrentReads, activeReads);
+    const ordinal = requestBodies.length;
+    if (ordinal === 1) {
+      await route.fulfill({ json: liveResolution("ROOM", [{ from: "reader", text: "initial retained", seq: "1" }], "1") });
+      activeReads -= 1;
+      return;
+    }
+    if (ordinal === 2) {
+      await new Promise((resolve) => setTimeout(resolve, 25));
+      await route.fulfill({ json: liveResolution("ROOM", [], "1", true) });
+      activeReads -= 1;
+      return;
+    }
+    if (ordinal === 3) {
+      await new Promise((resolve) => setTimeout(resolve, 25));
+      await route.fulfill({ json: liveResolution("ROOM", [{ from: "reader", text: "arrived after empty poll", seq: "2" }], "2", true) });
+      activeReads -= 1;
+      return;
+    }
+    await new Promise<void>(() => undefined);
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Rooms", exact: true }).click();
+  await page.getByRole("button", { name: "Open lobby →" }).click();
+  await expect(page.getByText("initial retained", { exact: true })).toBeVisible();
+  await expect(page.getByText("arrived after empty poll", { exact: true })).toBeVisible({ timeout: 15_000 });
+  await expect.poll(() => requestBodies.length).toBeGreaterThanOrEqual(4);
+  expect(requestBodies.slice(0, 4).map(({ since, wait }) => [since, wait])).toEqual([
+    [undefined, undefined], ["1", 10], ["1", 10], ["2", 10],
+  ]);
+  expect(maximumConcurrentReads).toBe(1);
+  expect(pageErrors.filter((message) => /Illegal invocation/i.test(message))).toEqual([]);
+  expect(writes).toBe(0);
+});
+
+test("final Rooms chat follows newest, anchors older reading, counts unseen messages, and stays viewport-bound", async ({ page }) => {
+  await page.clock.install();
+  const initial = Array.from({ length: 40 }, (_, index) => ({ from: "reader", text: `retained message ${index + 1}`, seq: String(index + 1) }));
+  let lobbyMessages = initial;
+  await page.route("**/api/rooms", (route) => route.fulfill({ json: { ok: true, value: { observations: [
+    { room: "lobby", seq: "40", approxStoredSize: "4K", lastActivity: "now", topic: "Lobby" },
+    { room: "garden", seq: "1", approxStoredSize: "1K", lastActivity: "now", topic: "Garden" },
+  ] } } }));
+  await page.route("**/api/inspect", (route) => {
+    const input = route.request().postDataJSON() as { room: string };
+    return route.fulfill({ json: liveResolution("ROOM", input.room === "lobby" ? lobbyMessages : [{ from: "reader", text: "garden newest", seq: "1" }]) });
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Rooms", exact: true }).click();
+  await page.getByRole("button", { name: "Load rooms" }).click();
+  await page.locator(".room-choice").filter({ hasText: "# lobby" }).click();
+  const viewport = page.locator(".conversation-viewport");
+  await expect(page.getByText("retained message 40", { exact: true })).toBeVisible();
+  expect(await viewport.evaluate((node) => node.scrollHeight - node.scrollTop - node.clientHeight)).toBeLessThanOrEqual(2);
+  await viewport.evaluate((node) => { node.scrollTop = 0; node.dispatchEvent(new Event("scroll")); });
+  const anchored = await page.locator(".chat-message").first().evaluate((node) => ({ text: node.textContent, top: node.getBoundingClientRect().top }));
+
+  lobbyMessages = [...initial, { from: "reader", text: "new arrival", seq: "41" }];
+  await page.clock.fastForward(10_000);
+  await expect(page.getByRole("button", { name: "↓ 1 new message" })).toBeVisible();
+  const afterOne = await page.locator(".chat-message").first().evaluate((node) => ({ text: node.textContent, top: node.getBoundingClientRect().top }));
+  expect(afterOne.text).toBe(anchored.text);
+  expect(Math.abs(afterOne.top - anchored.top)).toBeLessThanOrEqual(1);
+  await page.clock.fastForward(10_000);
+  await expect(page.getByRole("button", { name: "↓ 1 new message" })).toBeVisible();
+
+  lobbyMessages = [...lobbyMessages, ...Array.from({ length: 4 }, (_, index) => ({ from: "reader", text: `small arrival ${index + 1}`, seq: String(index + 42) }))];
+  await page.clock.fastForward(10_000);
+  await expect(page.getByRole("button", { name: "↓ 5 new messages" })).toBeVisible();
+  lobbyMessages = [...lobbyMessages, ...Array.from({ length: 100 }, (_, index) => ({ from: "reader", text: `bulk arrival ${index + 1}`, seq: String(index + 46) }))];
+  await page.clock.fastForward(10_000);
+  const counter = page.getByRole("button", { name: "↓ 99+ new messages" });
+  await expect(counter).toBeVisible();
+  await counter.click();
+  await expect(counter).toHaveCount(0);
+  expect(await viewport.evaluate((node) => node.scrollHeight - node.scrollTop - node.clientHeight)).toBeLessThanOrEqual(2);
+
+  for (const viewportSize of [{ width: 1800, height: 1125 }, { width: 1440, height: 900 }, { width: 1152, height: 720 }]) {
+    await page.setViewportSize(viewportSize);
+    const layout = await page.evaluate(() => ({ pageOverflow: document.documentElement.scrollHeight - innerHeight, composerBottom: document.querySelector(".composer")!.getBoundingClientRect().bottom, windowHeight: innerHeight, widthOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth }));
+    expect(layout.pageOverflow).toBeLessThanOrEqual(1);
+    expect(layout.composerBottom).toBeLessThanOrEqual(layout.windowHeight);
+    expect(layout.widthOverflow).toBe(0);
+  }
+  expect(await page.locator(".room-choices").evaluate((node) => getComputedStyle(node).overflowY)).toBe("auto");
+  if (await page.locator(".rooms-panel-toggle").isVisible()) await page.locator(".rooms-panel-toggle").click();
+  await page.locator(".room-choice").filter({ hasText: "# garden" }).click();
+  await expect(page.getByText("garden newest", { exact: true })).toBeVisible();
+  await expect(page.locator(".new-messages")).toHaveCount(0);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator(".composer")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(await page.evaluate(() => document.documentElement.clientWidth));
 });
 
 test("newcomer journey gates backup, signing, explicit publish, read-back verification, and receipt", async ({ page }) => {
@@ -239,7 +344,6 @@ test("newcomer journey gates backup, signing, explicit publish, read-back verifi
   await page.getByRole("textbox", { name: "Message", exact: true }).fill(`${hostile}!`);
   await page.getByRole("button", { name: /Review message/ }).click();
   await page.getByText("Technical signing details").click();
-  const onboardingNonce = (await page.getByLabel("Exact evidence review").locator("dd").nth(1).textContent())!;
   await page.getByRole("button", { name: "Sign locally" }).click();
   await page.getByRole("button", { name: "Publish Message" }).click();
   await expect(page.getByRole("dialog")).toContainText("cannot safely reuse the same nonce");
@@ -277,13 +381,10 @@ test("newcomer journey gates backup, signing, explicit publish, read-back verifi
   await expect(page.getByText("Verified", { exact: true })).toHaveCount(2);
   await page.getByRole("button", { name: "Rooms", exact: true }).first().click();
   await page.getByRole("button", { name: "Load rooms" }).click();
-  await page.locator(".room-choice").filter({ hasText: "Public lobby" }).click();
-  await expect(page.getByText("SIGNED · VALID")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Write to #lobby" })).toBeVisible();
-  await expect(page.getByText("Messages are public and untrusted after publication. Retained history may be incomplete.")).toBeVisible();
-  await expect(page.getByText("Do not enter private keys, seeds, passphrases, passwords, tokens, or backup content.")).toBeVisible();
+  await page.locator(".room-choice").filter({ hasText: "# lobby" }).click();
+  await expect(page.getByLabel("Cryptographic verdict VALID").first()).toBeVisible();
   await expect(page.getByText("0 characters")).toBeVisible();
-  await expect(page.getByLabel("Room message")).toHaveAttribute("placeholder", "Write a message…");
+  await expect(page.getByLabel("Room message")).toHaveAttribute("placeholder", "Message #lobby…");
   await page.locator(".composer").scrollIntoViewIfNeeded();
   await page.screenshot({ path: "artifacts/v12-10-preflight/r4-desktop-ready-composer.png" });
   await page.setViewportSize({ width: 390, height: 844 });
@@ -293,40 +394,24 @@ test("newcomer journey gates backup, signing, explicit publish, read-back verifi
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.getByLabel("Room message").fill("Second explicit room message");
   await expect(page.getByText("28 characters")).toBeVisible();
-  const writesBeforeReview = writeCount;
-  await page.getByRole("button", { name: /Review Message/ }).click();
-  expect(writeCount).toBe(writesBeforeReview);
-  await expect(page.getByLabel("Room signed evidence review")).toContainText("lobby|");
-  await expect(page.locator(".review-summary")).toContainText("#lobby");
-  await page.screenshot({ path: "artifacts/v12-10-preflight/r4-desktop-review.png" });
-  await expect(page.getByRole("button", { name: /Publish Message/ })).toHaveCount(0);
-  await page.getByRole("button", { name: "Sign Locally" }).click();
-  await expect(page.getByText("Signed locally", { exact: true })).toBeVisible();
-  await expect(page.getByText("This message has not been published.")).toBeVisible();
-  expect(writeCount).toBe(1);
-  await page.screenshot({ path: "artifacts/v12-10-preflight/r4-desktop-signed-local.png" });
-  await page.getByRole("button", { name: "Edit Message" }).click();
-  await page.getByLabel("Room message").fill("Edited room message invalidates the signed state");
-  await expect(page.getByText("Signed locally", { exact: true })).toHaveCount(0);
-  await page.getByRole("button", { name: /Review Message/ }).click();
-  const roomsNonce = (await page.getByLabel("Room signed evidence review").locator("dd").nth(1).textContent())!;
-  await page.getByRole("button", { name: "Sign Locally" }).click();
-  expect(BigInt(roomsNonce)).toBeGreaterThan(BigInt(onboardingNonce));
-  await page.getByRole("button", { name: /Publish Message/ }).click();
-  await expect(page.getByRole("dialog")).toContainText("cannot safely reuse the same nonce");
-  await page.getByRole("button", { name: "Publish message", exact: true }).click();
-  await expect(page.locator("strong:visible").filter({ hasText: "Publish request completed" })).toBeVisible();
-  await page.getByRole("button", { name: /Check publication/ }).click();
-  await expect(page.locator("strong:visible").filter({ hasText: "Published and verified" })).toBeVisible();
-  await page.screenshot({ path: "artifacts/v12-10-preflight/final-rooms-verified.png", fullPage: true });
-  await page.getByRole("button", { name: "View Receipt" }).click();
-  await expect(page.getByLabel("Rooms Evidence Receipt")).toContainText("Technocore Evidence Receipt");
+  await page.getByLabel("Room message").press("Enter");
+  await expect(page.getByLabel("Room message")).toHaveValue("");
+  await expect(page.getByLabel("Room message")).toBeFocused();
+  await expect.poll(() => writeCount).toBe(2);
+  await expect(page.getByText("Second explicit room message", { exact: true })).toBeVisible();
+  await expect(page.locator(".optimistic-message")).toHaveCount(0);
+  const sentRow = page.locator(".chat-message").filter({ hasText: "Second explicit room message" });
+  await expect(sentRow.getByLabel("Cryptographic verdict VALID")).toBeVisible();
+  await sentRow.getByLabel(/Open details for message/).click();
+  await expect(sentRow).toContainText(activeDid!);
+  await sentRow.getByRole("button", { name: "Add to Evidence" }).click();
+  await page.screenshot({ path: "artifacts/v12-10-preflight/final-live-rooms-desktop.png", fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.locator("section.receipt-inline").scrollIntoViewIfNeeded();
+  await page.locator(".composer").scrollIntoViewIfNeeded();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(await page.evaluate(() => document.documentElement.clientWidth));
-  await page.screenshot({ path: "artifacts/v12-10-preflight/final-rooms-receipt-mobile.png" });
+  await page.screenshot({ path: "artifacts/v12-10-preflight/final-live-rooms-mobile.png" });
   await page.setViewportSize({ width: 1440, height: 900 });
-  expect(writeCount).toBe(2); expect(readCount).toBe(2);
+  expect(writeCount).toBe(2); expect(readCount).toBeGreaterThanOrEqual(1);
 
   await page.getByRole("button", { name: "My Agent" }).first().click();
   await expect(page.getByRole("heading", { name: "My Agent", exact: true })).toBeVisible();
@@ -391,8 +476,6 @@ test("R4 composer gates reuse existing Agent creation and backup stages", async 
   const composer = page.locator(".composer");
   await composer.scrollIntoViewIfNeeded();
   await expect(page.getByRole("heading", { name: "Read-only conversation" })).toBeVisible();
-  await expect(page.getByText("Create or import an Agent to sign and publish to this room. Reading retained messages remains available.")).toBeVisible();
-  await expect(page.getByText("Never enter private keys, seeds, passphrases, passwords, tokens, or backup files here.")).toBeVisible();
   await expect(page.getByLabel("Room message")).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Sign Locally|Publish Message/ })).toHaveCount(0);
   await page.screenshot({ path: "artifacts/v12-10-preflight/r4-desktop-no-agent.png" });
@@ -410,8 +493,6 @@ test("R4 composer gates reuse existing Agent creation and backup stages", async 
   await page.getByRole("button", { name: "Open lobby →" }).click();
   await composer.scrollIntoViewIfNeeded();
   await expect(page.getByRole("heading", { name: "Composer locked" })).toBeVisible();
-  await expect(page.getByText("Secure backup to sign and publish.")).toBeVisible();
-  await expect(page.getByText("Reading retained messages remains available.", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Room message")).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Sign Locally|Publish Message/ })).toHaveCount(0);
   await page.screenshot({ path: "artifacts/v12-10-preflight/r4-desktop-backup-required.png" });
@@ -432,25 +513,25 @@ test("Rooms / Chat reads retained public conversation inertly and keeps publishi
   await page.getByRole("button", { name: "Create Agent →" }).click();
   await page.getByRole("button", { name: "Create identity" }).click();
   await page.getByRole("button", { name: "Rooms", exact: true }).click();
-  await expect(page.getByText(/Room discovery remains manual/)).toBeVisible();
+  await expect(page.getByText(/follow its live retained stream/)).toBeVisible();
   await page.getByRole("button", { name: "Load rooms" }).click();
   await expect(page.locator(".room-choice").first()).toContainText("# lobby");
-  await expect(page.locator(".room-choice").first()).toContainText("Recommended · discovered");
-  await expect(page.getByText(hostile).first()).toBeVisible();
+  await expect(page.locator(".room-choice").first()).toContainText("Recommended");
   await page.getByRole("button", { name: new RegExp(fixture.room) }).click();
   await expect(page.locator(".room-choice.selected")).toHaveAttribute("aria-current", "true");
-  await expect(page.getByText("UNSIGNED", { exact: true })).toBeVisible();
-  await expect(page.getByText("SIGNED · VALID")).toBeVisible();
+  await expect(page.getByText(hostile).last()).toBeVisible();
+  await expect(page.getByLabel("Cryptographic verdict VALID").first()).toBeVisible();
   await expect(page.getByText(hostile).last()).toBeVisible();
   expect(await page.evaluate(() => (window as Window & { __chatOwned?: boolean }).__chatOwned)).toBeUndefined();
   await expect(page.locator(`a[href="https://example.invalid/path"]`)).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Composer locked" })).toBeVisible();
-  await expect(page.getByText("Secure backup to sign and publish.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Secure Backup →" })).toBeVisible();
   await expect(page.getByLabel("Room message")).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Publish Message/ })).toHaveCount(0);
-  expect(roomReads).toBe(1);
-  await page.locator(".chat-message").filter({ hasText: hostile }).getByRole("button", { name: "Add to Evidence" }).click();
+  expect(roomReads).toBe(2);
+  const hostileRow = page.locator(".chat-message").filter({ hasText: hostile });
+  await hostileRow.getByLabel(/Open details for message/).click();
+  await hostileRow.getByRole("button", { name: "Add to Evidence" }).click();
   await page.locator(".sidebar-brand").click();
   await page.getByRole("button", { name: "Evidence", exact: true }).click();
   await page.getByText("Observed Evidence Details", { exact: true }).click();
@@ -461,9 +542,10 @@ test("Rooms / Chat reads retained public conversation inertly and keeps publishi
   await page.getByRole("button", { name: "Rooms", exact: true }).first().click();
   await page.getByRole("button", { name: "Load rooms" }).click();
   await page.getByRole("button", { name: new RegExp(fixture.room) }).click();
-  await page.getByRole("button", { name: "Refresh conversation" }).click();
-  expect(roomReads).toBe(3);
-  await page.locator(".chat-message").filter({ hasText: hostile }).getByRole("button", { name: "Inspect message" }).click();
+  await expect.poll(() => roomReads).toBeGreaterThanOrEqual(4);
+  const reloadedHostileRow = page.locator(".chat-message").filter({ hasText: hostile });
+  await reloadedHostileRow.getByLabel(/Open details for message/).click();
+  await reloadedHostileRow.getByRole("button", { name: "Inspect message" }).click();
   await expect(page.getByRole("heading", { name: "Debug a Message" })).toBeVisible();
   await expect(page.getByLabel("Room name")).toHaveValue("lobby");
   await expect(page.getByLabel("Message sequence")).toHaveValue("11");
@@ -494,22 +576,28 @@ test("R3 distinguishes bounded discovery from direct lobby access and supports t
   await expect(page.getByText("Loading public rooms…")).toBeVisible();
   await expect(page.locator(".room-choice")).toHaveCount(1);
   await expect(page.locator(".room-choice")).toContainText("# garden");
-  await expect(page.getByRole("heading", { name: "# lobby" })).toBeVisible();
-  await expect(page.getByText("Not observed in the current room list.", { exact: false })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Open lobby →" })).toBeVisible();
   await page.getByRole("button", { name: "Open lobby →" }).click();
   await expect(page.locator(".conversation-heading").getByRole("heading", { name: "# lobby" })).toBeVisible();
-  await expect(page.getByText("Retained conversation · Auto-refresh on")).toBeVisible();
-  await expect(page.locator(".chat-message").first()).toContainText("newest retained message");
-  await expect(page.locator(".chat-message").nth(1)).toContainText("older retained message");
-  await expect(page.getByText("SIGNED · VALID")).toBeVisible();
-  await expect(page.getByText("UNSIGNED", { exact: true })).toBeVisible();
-  await expect(page.getByText("seq 12")).toBeVisible();
+  await expect(page.getByText("Live · retained window")).toBeVisible();
+  await expect(page.locator(".chat-message").first()).toContainText("older retained message");
+  await expect(page.locator(".chat-message").nth(1)).toContainText("newest retained message");
+  const desktopChat = await page.evaluate(() => {
+    const viewport = document.querySelector<HTMLElement>(".conversation-viewport")!;
+    const composer = document.querySelector<HTMLElement>(".composer")!;
+    return { viewportScrollable: viewport.scrollHeight >= viewport.clientHeight, atNewest: viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <= 2, composerBottom: composer.getBoundingClientRect().bottom, windowHeight: innerHeight };
+  });
+  expect(desktopChat.viewportScrollable).toBe(true);
+  expect(desktopChat.atNewest).toBe(true);
+  expect(desktopChat.composerBottom).toBeLessThanOrEqual(desktopChat.windowHeight);
+  await expect(page.getByLabel("Cryptographic verdict VALID").first()).toBeVisible();
+  await expect(page.locator(".chat-message")).toHaveCount(2);
+  await expect(page.getByText("#12", { exact: true })).toBeVisible();
   await expect(page.locator('a[href="https://example.invalid/r3"]')).toHaveCount(0);
-  expect(roomReads).toBe(1);
+  expect(roomReads).toBe(2);
   await page.screenshot({ path: "artifacts/v12-10-preflight/r3-desktop-direct-lobby.png", fullPage: true });
 
-  await page.getByRole("button", { name: "Refresh conversation" }).click();
-  expect(roomReads).toBe(2);
+  await expect.poll(() => roomReads).toBeGreaterThanOrEqual(2);
   discoveryMode = "error";
   await page.getByRole("button", { name: "Refresh rooms" }).click();
   await expect(page.getByRole("alert").filter({ hasText: "Public rooms unavailable" })).toBeVisible();
@@ -517,11 +605,97 @@ test("R3 distinguishes bounded discovery from direct lobby access and supports t
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole("button", { name: "Back to rooms" })).toBeVisible();
+  await expect(page.locator(".composer")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(await page.evaluate(() => document.documentElement.clientWidth));
   await page.screenshot({ path: "artifacts/v12-10-preflight/r3-mobile-conversation.png", fullPage: true });
   await page.getByRole("button", { name: "Back to rooms" }).click();
   await expect(page.getByRole("button", { name: "Try Again" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(await page.evaluate(() => document.documentElement.clientWidth));
   await page.screenshot({ path: "artifacts/v12-10-preflight/r3-mobile-room-list.png", fullPage: true });
+});
+
+test("final Rooms UI stays readable across continuous responsive transitions", async ({ page }) => {
+  const rooms = [
+    { room: "lobby", seq: "90", approxStoredSize: "2K", lastActivity: "now", topic: "Lobby" },
+    { room: "very-long-technocore-room-name-that-must-not-overlap", seq: "89", approxStoredSize: "2K", lastActivity: "now", topic: "Long" },
+    { room: "wildlantern", seq: "88", approxStoredSize: "2K", lastActivity: "now", topic: "Wild" },
+  ];
+  await page.route("**/api/rooms", (route) => route.fulfill({ json: { ok: true, value: { observations: rooms } } }));
+  await page.route("**/api/inspect", (route) => route.fulfill({ json: liveResolution("ROOM", [
+    { from: "did:key:z6MkResponsiveAuthor", text: "Some ordinary message words must remain readable without character-by-character wrapping.", seq: "90", ts: "2026-09-07T00:00:00Z" },
+  ], "90", true) }));
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Rooms", exact: true }).click();
+  await page.getByRole("button", { name: "Load rooms" }).click();
+
+  const roomRows = page.locator(".room-choice");
+  await expect(roomRows).toHaveCount(3);
+  const boxes = await roomRows.evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect()).map(({ top, bottom, height }) => ({ top, bottom, height })));
+  for (let index = 0; index < boxes.length - 1; index += 1) expect(boxes[index]!.bottom).toBeLessThanOrEqual(boxes[index + 1]!.top + 0.5);
+  expect(boxes.every(({ height }) => height >= 36)).toBe(true);
+  await expect(roomRows.nth(1).locator("strong")).toHaveCSS("text-overflow", "ellipsis");
+  const beforeSelectedHeight = boxes[2]!.height;
+  await roomRows.nth(2).click();
+  expect((await roomRows.nth(2).boundingBox())!.height).toBeCloseTo(beforeSelectedHeight, 0);
+
+  const wide = [
+    { width: 1600, height: 900 }, { width: 1440, height: 900 }, { width: 1280, height: 800 },
+  ];
+  for (const size of wide) {
+    await page.setViewportSize(size);
+    await expect(page.locator(".rooms-sidebar")).toBeVisible();
+    await expect(page.locator(".rooms-panel-toggle")).toBeHidden();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth)).toBe(true);
+  }
+
+  const constrained = [
+    { width: 1180, height: 800 }, { width: 1100, height: 800 }, { width: 1000, height: 800 },
+    { width: 900, height: 800 }, { width: 800, height: 844 }, { width: 768, height: 844 },
+  ];
+  for (const size of constrained) {
+    await page.setViewportSize(size);
+    await expect(page.locator(".rooms-sidebar")).toBeHidden();
+    await expect(page.locator(".rooms-panel-toggle")).toBeVisible();
+    await expect(page.getByText("Some ordinary message words", { exact: false })).toBeVisible();
+    const messageStyle = await page.locator(".message-content").evaluate((node) => ({ width: node.getBoundingClientRect().width, wordBreak: getComputedStyle(node).wordBreak, overflowWrap: getComputedStyle(node).overflowWrap }));
+    expect(messageStyle.width).toBeGreaterThan(240);
+    expect(messageStyle.wordBreak).toBe("normal");
+    expect(messageStyle.overflowWrap).toBe("break-word");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth)).toBe(true);
+  }
+
+  await page.setViewportSize({ width: 1000, height: 800 });
+  await page.screenshot({ path: "artifacts/v12-10-preflight/final-rooms-responsive-medium.png" });
+  await page.locator(".rooms-panel-toggle").click();
+  await expect(page.locator(".rooms-sidebar")).toBeVisible();
+  await expect(page.locator(".rooms-panel-close")).toBeFocused();
+  await page.screenshot({ path: "artifacts/v12-10-preflight/final-rooms-responsive-drawer.png" });
+  await page.locator(".room-choice").filter({ hasText: "very-long-technocore" }).click();
+  await expect(page.locator(".conversation-heading").getByRole("heading", { name: /very-long-technocore/ })).toBeVisible();
+  await expect(page.locator(".rooms-sidebar")).toBeHidden();
+
+  for (const size of [{ width: 600, height: 844 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(size);
+    await expect(page.getByRole("button", { name: "Back to rooms" })).toBeVisible();
+    await expect(page.locator(".rooms-panel-toggle")).toBeHidden();
+    await expect(page.locator(".composer")).toBeVisible();
+    await expect(page.locator(".message-details summary")).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth)).toBe(true);
+    if (size.width === 390) await page.screenshot({ path: "artifacts/v12-10-preflight/final-rooms-responsive-mobile.png" });
+  }
+
+  for (const width of [390, 600, 768, 800, 900, 1000, 1100, 1180, 1280, 1440, 1600]) {
+    await page.setViewportSize({ width, height: width >= 1280 ? 900 : 844 });
+    await expect(page.locator(".conversation-heading").getByRole("heading", { name: /very-long-technocore/ })).toBeVisible();
+  }
+  for (const zoom of [0.8, 1, 1.25]) {
+    await page.evaluate((value) => { document.documentElement.style.zoom = String(value); }, zoom);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth)).toBe(true);
+    await expect(page.locator(".composer")).toBeVisible();
+  }
+  await page.evaluate(() => { document.documentElement.style.zoom = ""; });
+  await page.screenshot({ path: "artifacts/v12-10-preflight/final-rooms-responsive-wide.png" });
 });
 
 test("Explore loads bounded untrusted rooms, handles empty/error, and navigates through transcript and pipeline", async ({ page }) => {
@@ -610,7 +784,7 @@ test("mobile prioritizes verdict and boundary before technical stages without ov
   expect(positions.verdict).toBeLessThan(positions.boundary); expect(positions.boundary).toBeLessThan(positions.stages); expect(positions.scroll).toBe(positions.width);
 });
 
-function liveResolution(kind: "ROOM" | "MESSAGE", records: readonly Record<string, unknown>[]) {
-  return { ok: true, kind, value: { report: { inputKind: kind, messages: records.map((record) => ({ verificationState: "VALID", fields: [field("room", fixture.room), field("text", record.text), field("from", record.from), field("nonce", record.nonce), field("signature", record.sig), field("seq", record.seq), field("ts", record.ts)].filter((item) => item.value !== undefined), warnings: [] })), warnings: [], operationalErrors: [] }, serverMetadata: [field("count", records.length), field("first_seq", "1"), field("last_seq", "9")] } };
+function liveResolution(kind: "ROOM" | "MESSAGE", records: readonly Record<string, unknown>[], lastSequence = "9", waitHeld?: boolean) {
+  return { ok: true, kind, value: { report: { inputKind: kind, messages: records.map((record) => ({ verificationState: "VALID", fields: [field("room", fixture.room), field("text", record.text), field("from", record.from), field("nonce", record.nonce), field("signature", record.sig), field("seq", record.seq), field("ts", record.ts)].filter((item) => item.value !== undefined), warnings: [] })), warnings: [], operationalErrors: [] }, serverMetadata: [field("count", records.length), field("first_seq", "1"), field("last_seq", lastSequence), ...(waitHeld === undefined ? [] : [field("wait_held", waitHeld)])] } };
 }
 function field(name: string, value: unknown) { return { name, value, authority: "UNTRUSTED_CALLER_DATA" }; }
