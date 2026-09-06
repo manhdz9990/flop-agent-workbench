@@ -4,17 +4,17 @@
 FLOP Agent Workbench V1.2; includes the completed Technocore Protocol Debugger V1.1.
 
 ## Lifecycle stage
-RELEASE. Final Product Owner acceptance: PASS. Final Live Rooms, responsive/UI hardening, real signed-send validation, and official Technocore observation: PASS. Release deployment: IN PROGRESS. Production verification: NOT YET PERFORMED.
+RELEASE. Final Product Owner acceptance: PASS. Final Live Rooms, responsive/UI hardening, real signed-send validation, and official Technocore observation: PASS. GitHub: PUSHED / SYNCHRONIZED. Vercel deployment: BLOCKED — no existing authenticated CLI session. Production verification: NOT PERFORMED.
 
 ## Coding agent
 VS Code + Codex.
 
 ## Current phase
-V1.2 FINAL RELEASE. The accepted live engine remains unchanged. GitHub release commit, existing-project Vercel deployment, canonical-domain assignment, and read-only production verification are authorized and in progress.
+V1.2 FINAL RELEASE. Release commit `3365a79d60b4c631ae10ce78f561b0d9c8563340` is pushed to `origin/main`. Existing-project Vercel deployment, canonical-domain assignment, and production verification are blocked pending restoration of an authenticated Vercel environment; no new project or temporary deployment was created.
 
 ### V1.2 Final Release authorization and clean gate — 2026-09-07
 
-**Status: RELEASE IN PROGRESS. Final Product Owner acceptance: PASS.** Final Live Rooms, responsive/UI hardening, Product Owner real signed-send validation, and independent observation through the official Technocore human interface are accepted. The release remains V1.2.
+**Status: RELEASE BLOCKED AT VERCEL AUTHENTICATION. Final Product Owner acceptance: PASS.** Final Live Rooms, responsive/UI hardening, Product Owner real signed-send validation, and independent observation through the official Technocore human interface are accepted. The release remains V1.2. GitHub `main` is synchronized at release commit `3365a79d60b4c631ae10ce78f561b0d9c8563340`.
 
 The complete diff since GitHub commit `c15023336a594160e54ae82264fab88e20d0c773` was audited. Every source, test, specification, ADR, plan, task, and status change belongs to the approved final Rooms viewport, official Technocore-aligned live-read/send reconciliation, runtime timer correction, or responsive/UI hardening work. Dependency manifests are unchanged. Ignored build, test, cache, and log artifacts are excluded. No credential, token, private key, seed, mnemonic, passphrase, Agent backup, environment file, unexpected persistence, telemetry, server signer, write relay, arbitrary proxy, or unrelated source change was found.
 
@@ -22,7 +22,7 @@ Architecture integrity remains PASS: identity and signing stay browser-local; ca
 
 **Final clean automated gate:** typecheck PASS; 27/27 unit/integration files and 332/332 tests PASS; ESLint PASS with zero warnings; production build PASS with routes `/`, `/api/inspect`, `/api/rooms`, and framework `/_not-found`; Chromium E2E 20/20 PASS with controlled/intercepted write transport; offline npm audit PASS with 0 vulnerabilities. Automated live Technocore writes: NO.
 
-Deployment state: NOT YET DEPLOYED. Production read verification: NOT YET PERFORMED. Canonical production domain assignment: PENDING availability confirmation for `https://flop-agent.vercel.app`. Production signed-write verification: AWAITING OPTIONAL PRODUCT OWNER PRODUCTION CONFIRMATION. Rollback target before this release is GitHub commit `c15023336a594160e54ae82264fab88e20d0c773`; there is no database, migration, or persisted server data requiring backup.
+Deployment state: NOT DEPLOYED. The repository has no local `.vercel/project.json`, and Vercel CLI 59.11.7 reported `Logged out` when asked to identify the existing authenticated account. Per the release stop conditions, no login flow, temporary deployment, new project, project relink, domain availability check, or domain assignment was attempted. Production read verification: NOT PERFORMED. Canonical production domain assignment: NOT CHECKED for `https://flop-agent.vercel.app`. Production signed-write verification: AWAITING OPTIONAL PRODUCT OWNER PRODUCTION CONFIRMATION after a successful deployment. Rollback target before this release is GitHub commit `c15023336a594160e54ae82264fab88e20d0c773`; there is no database, migration, or persisted server data requiring backup.
 
 ## Last verified state
 - Product direction reviewed and approved: Protocol Inspector, evolved from Trust Lens.
