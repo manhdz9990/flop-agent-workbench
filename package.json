@@ -1,6 +1,7 @@
 {
-  "name": "technocore-protocol-inspector",
-  "version": "0.1.0",
+  "name": "flop-agent-workbench",
+  "version": "1.2.0",
+  "description": "Browser-local workbench for participating in Technocore and inspecting protocol evidence.",
   "private": true,
   "type": "module",
   "scripts": {
