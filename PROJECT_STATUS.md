@@ -4,17 +4,17 @@
 FLOP Agent Workbench V1.2; includes the completed Technocore Protocol Debugger V1.1.
 
 ## Lifecycle stage
-RELEASE. Final Product Owner acceptance: PASS. Final Live Rooms, responsive/UI hardening, real signed-send validation, and official Technocore observation: PASS. GitHub: PUSHED / SYNCHRONIZED. Existing Vercel project deployment: READY at the accepted GitHub HEAD. Requested canonical alias: BLOCKED — `flop-agent.vercel.app` is already in use. Production verification: NOT PERFORMED because the mandatory domain stop condition was reached.
+RELEASE. V1.2: RELEASED. Final Product Owner acceptance, Final Live Rooms, responsive/UI hardening, real signed-send validation, official Technocore observation, and official FLOP favicon: PASS. GitHub: PUSHED / SYNCHRONIZED. Existing Vercel project: PRESERVED. Production deployment and read-only verification: PASS at `https://flop-agent-workbench.vercel.app`.
 
 ## Coding agent
 VS Code + Codex.
 
 ## Current phase
-V1.2 FINAL RELEASE. `origin/main` commit `141d328543b1f9ca2ee50a024ba6f65439604b71` was automatically deployed through the verified existing `manh100k/flop-agent-workbench` GitHub integration and is READY. Release completion is blocked because Vercel reports the specifically approved canonical alias `flop-agent.vercel.app` is already in use and it is not resolvable under team `manh100k`. No alternative domain, new project, or temporary deployment was created.
+V1.2 FINAL RELEASE: COMPLETE / PASS. Official favicon application commit `7ed8b2a983bc2a24d42501e471187e5a3bae3eab` is pushed to `origin/main` and deployed through the verified existing `manh100k/flop-agent-workbench` GitHub integration. The accepted existing production domain remains `https://flop-agent-workbench.vercel.app`; no new project or alternative short domain was created.
 
 ### V1.2 Final Release authorization and clean gate — 2026-09-07
 
-**Status: RELEASE BLOCKED AT CANONICAL DOMAIN ASSIGNMENT. Final Product Owner acceptance: PASS.** Final Live Rooms, responsive/UI hardening, Product Owner real signed-send validation, and independent observation through the official Technocore human interface are accepted. The release remains V1.2. GitHub `main` was synchronized at release commit `3365a79d60b4c631ae10ce78f561b0d9c8563340`, followed by factual release-status commit `141d328543b1f9ca2ee50a024ba6f65439604b71`.
+**Status: RELEASED / PRODUCTION READ-ONLY VERIFICATION PASS. Final Product Owner acceptance: PASS.** Final Live Rooms, responsive/UI hardening, Product Owner real signed-send validation, and independent observation through the official Technocore human interface are accepted. The release remains V1.2. GitHub `main` includes release commit `3365a79d60b4c631ae10ce78f561b0d9c8563340`, release-status bookkeeping, and official favicon commit `7ed8b2a983bc2a24d42501e471187e5a3bae3eab`.
 
 The complete diff since GitHub commit `c15023336a594160e54ae82264fab88e20d0c773` was audited. Every source, test, specification, ADR, plan, task, and status change belongs to the approved final Rooms viewport, official Technocore-aligned live-read/send reconciliation, runtime timer correction, or responsive/UI hardening work. Dependency manifests are unchanged. Ignored build, test, cache, and log artifacts are excluded. No credential, token, private key, seed, mnemonic, passphrase, Agent backup, environment file, unexpected persistence, telemetry, server signer, write relay, arbitrary proxy, or unrelated source change was found.
 
@@ -25,6 +25,18 @@ Architecture integrity remains PASS: identity and signing stay browser-local; ca
 Authenticated Vercel account `manhdz9990` and team `manh100k` were confirmed. Existing project `manh100k/flop-agent-workbench` (`prj_uhCEfKX4LYDgyVBwtb98B1w04Bvn`) was confirmed without relinking or creating a project. Its build log proves the existing GitHub integration cloned `github.com/manhdz9990/flop-agent-workbench`, branch `main`, commit `141d328`, and the production deployment `dpl_ggNyQNWhoJtPz4kLq9jTQsebdo3D` is READY. Existing aliases remain `flop-agent-workbench.vercel.app`, `flop-agent-workbench-manh100k.vercel.app`, and `flop-agent-workbench-git-main-manh100k.vercel.app`.
 
 Canonical-domain assignment: FAIL / STOP. Vercel returned `The chosen alias "flop-agent.vercel.app" is already in use`; inspecting that alias under `manh100k` also confirmed it is not a deployment in this team. No alias was added, removed, or replaced. Per Product Owner instruction, no alternative name was selected and read-only production smoke testing did not continue after this stop condition. Production verification: NOT PERFORMED. Automated live Technocore writes: NO. Production signed-write verification: NOT PERFORMED. Rollback target remains GitHub commit `c15023336a594160e54ae82264fab88e20d0c773`; there is no database, migration, or persisted server data requiring backup.
+
+### Official FLOP favicon and completed production release — 2026-09-07
+
+**Status: COMPLETE / PASS.** App Router metadata now references the unchanged official `public/brand/flop-logo.png` directly as `/brand/flop-logo.png`. The source remains a square 400×400 PNG with no redraw, crop, recolor, geometry change, generated derivative, or dependency. Local production Chromium decoded the linked icon at 400×400, loaded Home and Rooms, and reported no console/runtime errors.
+
+Full post-change gate: typecheck PASS; 27/27 unit/integration files and 332/332 tests PASS; ESLint PASS with zero warnings; production build PASS; Chromium E2E 20/20 PASS. Final diff contained only the single favicon metadata declaration before the application commit; secret/artifact audit PASS.
+
+GitHub application commit `7ed8b2a983bc2a24d42501e471187e5a3bae3eab` was pushed to `origin/main`. The existing Vercel project `manh100k/flop-agent-workbench` produced production deployment `dpl_DRFGKVE8wuRGdHrKHBSz4LTVmLAo`; its build log proves branch `main`, commit `7ed8b2a`, successful Next.js build, and READY status. Existing aliases were preserved. Production URL: `https://flop-agent-workbench.vercel.app`.
+
+Read-only production Chromium smoke PASS: the favicon link resolved to the official asset and decoded 400×400; Home loaded; bounded discovery returned 50 Public Rooms; a public room opened with 200 retained records; nine serialized room reads were observed and reads continued during the observation window; My Agent, Observed Evidence, Developer Tools, mobile navigation, and Rooms loaded; mobile page overflow was zero; console/page errors and detected publish/write requests were zero. Automated live Technocore writes: NO.
+
+Production read path: VERIFIED. Product Owner real signed-write behavior was already manually accepted against Technocore; no production write was automated in this release. Remaining non-blocking risks: `flop-agent.vercel.app` remains unavailable; Firefox/WebKit are not fully validated; production signed-write/CORS behavior may be optionally reconfirmed manually by the Product Owner. Rollback remains available through prior Vercel deployment history and the previous Git commit; no database or persisted server data exists.
 
 ## Last verified state
 - Product direction reviewed and approved: Protocol Inspector, evolved from Trust Lens.
