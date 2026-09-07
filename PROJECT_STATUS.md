@@ -1,16 +1,30 @@
 # PROJECT_STATUS
 
 ## Project
-FLOP Agent Workbench V1.3 — Guided Agent Journey & Contribution Evidence; production remains the released V1.2.
+FLOP Agent Workbench V1.3 — Guided Agent Journey & Contribution Evidence; V1.3 is released and production-verified.
 
 ## Lifecycle stage
-V1.3 RELEASE READY — PRODUCT OWNER ACCEPTANCE PASSED — RELEASE AUTHORIZATION REQUIRED. V13-01 through V13-06 are complete, locally verified, and manually accepted by the Product Owner. Production V1.2 remains released and unchanged. No V1.3 commit, push, or deployment was performed.
+V1.3 RELEASED — PRODUCTION VERIFIED.
 
 ## Coding agent
 VS Code + Codex.
 
 ## Current phase
-V1.3 FINAL PRE-RELEASE GATE: PASS. PRODUCT OWNER MANUAL ACCEPTANCE: PASS. RELEASE AUTHORIZATION REQUIRED. The accepted V1.3 journey and all V1.2-preserved behavior passed the complete repository gate and final scope/security/diff audit. Production remains unchanged.
+V1.3 RELEASE: PASS. Application commit `b285af7976d7997364590df7150f68b37b3d65bf` is pushed to `origin/main`, deployed through the existing Vercel project, and verified read-only at the canonical production URL.
+
+### V1.3 Production Release — 2026-09-08
+
+**Status: RELEASED / PRODUCTION VERIFIED.** Package metadata is `1.3.0`. GitHub push advanced `main` normally to application release commit `b285af7976d7997364590df7150f68b37b3d65bf`. Existing Vercel project `manh100k/flop-agent-workbench` automatically built that exact GitHub commit as deployment `dpl_FuLiANtbwytnofq3akXinhktPwcC`, status READY, and assigned the existing canonical alias `https://flop-agent-workbench.vercel.app`.
+
+Read-only production Chromium smoke PASS: Home, Create/Restore/Import entry, Guided Agent Journey, Public Rooms, My Agent, Developer Tools, desktop 1440×900, mobile 390×844, page overflow, and security headers passed. All `say-signed` and X intent requests were blocked during verification; observed automated live Technocore writes and X posts were zero.
+
+Rollback reference: V1.2 commit `74a5397af3cf28194ebe91db14f0acbfc680bd1d`, Vercel deployment `https://flop-agent-workbench-mh0ketzk9-manh100k.vercel.app`. Remaining limitations: runtime onboarding/evidence can clear on refresh; Technocore observation is bounded/non-durable; X ownership/content/attachment is not verified; browser popup-block detection is not reliable.
+
+This release-status record is documentation-only. It is committed locally after production verification and intentionally must not trigger another application deployment merely to publish documentation.
+
+## Next Exact Action — V1.3 released
+
+No Product Owner action is required for the V1.3 release. Monitor normal production behavior and authorize any future work separately.
 
 ### V1.3 Final Pre-release Gate — 2026-09-08
 

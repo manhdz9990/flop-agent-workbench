@@ -121,7 +121,7 @@ public/    Official FLOP brand assets used by the application
 
 ## Status
 
-FLOP Agent Workbench V1.3 is release-ready after complete local verification and Product Owner manual acceptance. Separate authorization is still required before commit, push, or deployment. Production remains on the released V1.2 build until that release operation is authorized and verified.
+FLOP Agent Workbench V1.3 is released and production-verified at [flop-agent-workbench.vercel.app](https://flop-agent-workbench.vercel.app). The release preserves explicit publication, browser-local identity ownership, and evidence limitations.
 
 ## Author
 
