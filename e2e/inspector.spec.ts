@@ -445,7 +445,7 @@ test("newcomer journey gates backup, signing, explicit publish, read-back verifi
   await page.getByRole("dialog").getByRole("button", { name: "Lock Agent" }).click();
   await expect(page.getByRole("heading", { name: "Your Agent is not currently unlocked in this browser." })).toBeVisible();
   await expect(page.getByText("No Agent loaded").first()).toBeVisible();
-  await page.getByRole("button", { name: "Restore Agent", exact: true }).click();
+  await page.getByRole("button", { name: "Restore Workbench Agent", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Restore Agent", exact: true })).toBeVisible();
   await page.getByLabel("Encrypted Backup").setInputFiles(backupPath!);
   await page.getByLabel("Backup Password").fill(passphrase);

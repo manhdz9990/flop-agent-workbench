@@ -1,16 +1,112 @@
 # PROJECT_STATUS
 
 ## Project
-FLOP Agent Workbench V1.2; includes the completed Technocore Protocol Debugger V1.1.
+FLOP Agent Workbench V1.3 — Guided Agent Journey & Contribution Evidence; production remains the released V1.2.
 
 ## Lifecycle stage
-V1.2 IDENTITY UX UPDATE RELEASED. The Identity Ownership, Backup/Recovery, Restore Agent, and consolidated Agent lifecycle UX update is COMPLETE / PRODUCT OWNER PASS / RELEASED / PRODUCTION READ-ONLY VERIFICATION PASS.
+V1.3 RELEASE READY — PRODUCT OWNER ACCEPTANCE PASSED — RELEASE AUTHORIZATION REQUIRED. V13-01 through V13-06 are complete, locally verified, and manually accepted by the Product Owner. Production V1.2 remains released and unchanged. No V1.3 commit, push, or deployment was performed.
 
 ## Coding agent
 VS Code + Codex.
 
 ## Current phase
-V1.2 IDENTITY OWNERSHIP, BEGINNER UX & EXISTING AGENT RESTORE UPDATE: COMPLETE / PRODUCT OWNER PASS / RELEASED. Release commit `89e08d5c0163d1362d110ad1085a599bb55cd89e` is on `origin/main` and was deployed through the existing `manh100k/flop-agent-workbench` Vercel project. Canonical production URL: `https://flop-agent-workbench.vercel.app`.
+V1.3 FINAL PRE-RELEASE GATE: PASS. PRODUCT OWNER MANUAL ACCEPTANCE: PASS. RELEASE AUTHORIZATION REQUIRED. The accepted V1.3 journey and all V1.2-preserved behavior passed the complete repository gate and final scope/security/diff audit. Production remains unchanged.
+
+### V1.3 Final Pre-release Gate — 2026-09-08
+
+**Status: RELEASE READY / PRODUCT OWNER ACCEPTANCE PASSED / RELEASE AUTHORIZATION REQUIRED.** The Product Owner reported the complete manual V1.3 product flow working as expected. The final working tree was reconciled against the approved V13-01 through V13-06 contracts; no scope expansion, unresolved material decision, secret artifact, unintended API/backend change, protocol semantic change, live-write automation, or release blocker was found.
+
+Final verification: typecheck PASS; 31/31 unit/integration files and 380/380 tests PASS; ESLint PASS with zero warnings; production build PASS with routes `/`, `/api/inspect`, and `/api/rooms`; Chromium E2E 24/24 PASS; security regression PASS; offline dependency audit 0 vulnerabilities; diff whitespace check PASS. All automated Technocore writes remained intercepted and all X behavior remained user-directed. Automated live Technocore writes/X posts: NO/NO.
+
+Generated `.next`, `test-results`, `node_modules`, and `debug.log` remain ignored. Secret-pattern and sensitive-filename scans found no committed or candidate secret material. Package metadata remains `1.2.0`; this does not affect runtime behavior, but an explicitly authorized release operation should decide whether to bump it to `1.3.0` before creating the release commit.
+
+## Next Exact Action — V1.3 release ready
+
+Product Owner explicitly authorizes the V1.3 release operation, including the package-version decision, release commit, push, deployment, and post-deployment read-only verification. Do not perform any of those actions automatically.
+
+### V13-06 End-to-End Product QA + UX Polish + Release Candidate — 2026-09-07
+
+**Status: RELEASE CANDIDATE / MANUAL PRODUCT OWNER ACCEPTANCE REQUIRED.** The complete Create/Restore/Import through Agent Ready and Workbench transition was reviewed as one product. Visible progress is now the eight-stage Identity, Secure, Profile, Message, Card, Share, Evidence, Ready model; the underlying twelve-state machine remains unchanged.
+
+Bounded polish removed stale V13-03 Card-lock copy, consolidated Card creation into one clear task, requires local Card download before Open in X, adds reliable focus to each new task heading, adds safe local receipt copy/download failure guidance, and makes all eight progress stages visible at 390px. Because `noopener,noreferrer` prevents reliable popup-block detection across browsers, opening X remains an interaction only; the required returned X URL continues to prevent false post completion.
+
+Production-build screenshots were captured and visually inspected at 1440×900, 1280×720, 768×1024, and 390×844. Card hierarchy, long-value wrapping, progress, receipt, checklist, sidebar/mobile shell, and critical actions remained usable without page-level horizontal overflow. Automated transport stayed intercepted; no live Technocore write or X post occurred.
+
+Final gate: typecheck PASS; 31/31 files and 380/380 unit/integration tests PASS; ESLint PASS; production build PASS with unchanged routes; Chromium 24/24 PASS; offline audit 0 vulnerabilities. Security regression PASS. No dependency, backend/API, cryptography, signing/nonce, contribution/evidence semantics, persistence, or Live Rooms behavior changed. Commit/push/deploy: NO/NO/NO.
+
+## Next Exact Action — V13-06 release candidate
+
+Product Owner performs the V1.3 manual acceptance checklist, then separately authorizes V1.3 final release preparation. Do not commit, push, deploy, or start another feature automatically.
+
+### V13-05 X Attachment + Signed Contribution Evidence + Agent Ready — 2026-09-07
+
+**Status: COMPLETE / LOCAL PASS / PRODUCT OWNER REVIEW REQUIRED.** X references are local-only, ≤256 characters, HTTPS exact-host x.com status URLs with bounded username/numeric ID; credentials, ports, deceptive hosts, arbitrary paths and schemes fail, while query/fragment are stripped. `X post added` means user-provided reference only—not verified ownership, content, or card attachment.
+
+The fixed-key `flop-agent-contribution/v1` JSON contains only public DID, self-declared Display Name, canonical X reference, product, and first authoritative lobby record. No approved contribution room existed, so `#lobby` is reused strictly as a documented Workbench onboarding convention, not a FLOP Labs lane/acceptance signal. Review precedes one explicit Sign & Record through the existing identity, nonce reservations, attempt session, local signing, browser-direct publish, exact read-back, and verification owners.
+
+Only exact observed + VALID produces `flop-contribution-evidence-receipt/v1`, adds existing runtime Evidence, and reaches Agent Ready. JSON/Markdown copy/download are local and limitation-bearing. Response, unknown, not observed, unrelated/mismatch, INVALID, UNVERIFIABLE, and read failure cannot complete or republish. Final actions enter Rooms or open My Agent/Evidence; refresh may clear runtime evidence.
+
+Gate: typecheck PASS; 31/31 files and 380/380 unit/integration tests PASS; ESLint PASS; production build PASS with unchanged routes; Chromium 24/24 PASS; offline audit 0 vulnerabilities. No live Technocore write, X post, dependency, backend/API, secret persistence, crypto, nonce, or Live Rooms change. Commit/push/deploy: NO/NO/NO.
+
+## Next Exact Action — V13-05 complete
+
+Product Owner reviews the completed V1.3 onboarding loop and separately authorizes final V1.3 regression/release preparation. Do not commit, push, deploy, or begin another phase automatically.
+
+### V13-04 Verified Agent Card + X Share — 2026-09-07
+
+**Status: COMPLETE / LOCAL PASS / PRODUCT OWNER REVIEW REQUIRED.** CARD remains inaccessible until V13-03 produces exact authoritative observation and independent VALID. The explicit public model contains only bounded Display Name, public DID, lobby, authoritative sequence, Ed25519, signature-verification status, and product branding. Display Name remains self-declared; no identity, trust, official, reputation, contribution, reward, token, payment, or eligibility claim is made.
+
+The responsive preview uses official same-origin FLOP branding. Browser-local Canvas produces deterministic-model PNG output at 1600×900 as `flop-technocore-agent-card.png`; no session/secret object, hidden DOM capture, server renderer, upload, dependency, or external image API exists. Three deterministic English X drafts stay within 280 characters, include genuine DID/record/product URL/@flop_labs evidence, remain editable/copyable, and use only an encoded X Web Intent. The user is told to attach the downloaded card and press Post manually.
+
+Card download, Copy Post, and X_OPENED are interaction facts only. They do not prove a post, contribution, attachment, evidence, or completion. V13-05 `ATTACH_X_POST` and contribution states remain visibly locked. Controlled Chromium intercepted the X intent and performed no real post.
+
+Gate: typecheck PASS; 30/30 files and 363/363 unit/integration tests PASS; ESLint PASS; production build PASS with unchanged routes; Chromium 24/24 PASS; offline audit 0 vulnerabilities. Responsive card/share flow and PNG dimensions/type passed at desktop and 390×844 without page overflow. No live Technocore write, X post, dependency, backend/API, cryptography, signing/nonce, Secret Key, persistence, or Live Rooms change. Commit/push/deploy: NO/NO/NO.
+
+## Next Exact Action — V13-04 complete
+
+Product Owner reviews V13-04 Verified Agent Card + X Share and separately authorizes V13-05 X URL attachment and contribution recording. Do not begin V13-05 automatically.
+
+### V13-03 Guided First Signed Message — 2026-09-07
+
+**Status: COMPLETE / LOCAL PASS / PRODUCT OWNER REVIEW REQUIRED.** After active identity, verified recovery, and Personalize, the journey generates a deterministic editable English introduction for `#lobby`. It uses only the self-declared Display Name/description and contains no external generation, secrets, reward/investment/eligibility, official-agent, or invented claims.
+
+Sign & Publish is one explicit action and consumes the same page-owned identity session, nonce reservations, publish-attempt session, local Ed25519 signing, canonical payload, and browser-direct fixed Technocore transport as existing accepted machinery. Response received and outcome unknown remain unverified; no automatic action, retry, same-nonce reuse, or second nonce owner exists. Check publication performs only existing bounded read-back. Exact expected record plus independent VALID alone completes VERIFY_MESSAGE and shows authoritative sequence; CARD then appears only as a locked future step.
+
+Controlled verification used intercepted transport only: one click produced one attempt, response alone did not complete, explicit read-back observed exact sequence 901 and VALID, and recheck did not republish. Existing domain tests cover nonce burn, ambiguity, not observed, read unavailable, mismatch, INVALID, and UNVERIFIABLE. No live Technocore write occurred.
+
+Gate: typecheck PASS; 29/29 files and 359/359 unit/integration tests PASS; ESLint PASS; production build PASS with unchanged routes; Chromium 24/24 PASS; offline audit 0 vulnerabilities. Desktop/mobile overflow and keyboard-native controls PASS. Security, cryptography, nonce semantics, APIs/backend, persistence, and Live Rooms behavior are unchanged. Commit/push/deploy: NO/NO/NO.
+
+## Next Exact Action — V13-03 complete
+
+Product Owner reviews V13-03 Guided First Signed Message and separately authorizes Agent Card work. Do not begin Agent Card or X integration automatically.
+
+### V13-02 Identity Portability — 2026-09-07
+
+**Status: COMPLETE / LOCAL PASS / PRODUCT OWNER REVIEW REQUIRED.** My Agent retains Encrypted Backup as the recommended recovery path and adds a separate high-friction Advanced download of the existing 32-byte Ed25519 seed. The file `technocore-agent-secret.txt` contains only exactly 64 lowercase hexadecimal characters plus one final newline. Reveal/Hide/Copy remain intact; the download warning explicitly covers public sharing, X/Discord/Telegram, untrusted websites, GitHub, and screenshots.
+
+Import Existing Agent uses a closed local adapter registry. Plain seed files accept exactly 64 hex characters after surrounding ASCII-whitespace normalization. CryptoTelugu browser backup V4 full import is supported because the deployed public client implementation was independently inspected: UTF-8 password, PBKDF2-SHA-256/250,000, base64url 16-byte salt, AES-GCM-256/base64url 12-byte IV and tagged ciphertext, Ed25519 PKCS#8 plaintext, raw public-key derivation, and `did:key` derivation were confirmed. Workbench Backup V1 detection redirects to and reuses the existing restore implementation.
+
+Files are capped at 32 KiB before expensive work. Crypto V4 uses exact keys, fixed version/algorithm/KDF/iteration values, canonical base64url, bounded strings and decoded lengths, authenticated decryption, exact PKCS#8 validation, and independently derived DID/public-key comparisons. Unknown formats are never guessed. A candidate Public DID is shown and explicitly confirmed before the single existing runtime holder is updated. Raw/Crypto imports are `NOT_VERIFIED` and enter Secure/Verify; no backup-verification evidence is fabricated.
+
+Security boundary PASS: no secret persistence, server upload/import, API route, backend signing, URL, log, telemetry, diagnostics, Evidence, SSR, cookie, IndexedDB, localStorage, sessionStorage, or file-driven fetch was introduced. No dependency, Backup V1 schema, Ed25519 primitive, signing/canonical payload, nonce, publishing, read-back, Evidence semantics, or Live Rooms runtime behavior changed. JavaScript/browser memory zeroization remains best effort, and deliberate plain-text downloads remain the residual user-controlled risk.
+
+Verification: typecheck PASS; 29/29 unit/integration files and 357/357 tests PASS; ESLint PASS with zero warnings; production build PASS with unchanged routes; Chromium E2E 24/24 PASS using 8 workers for deterministic timer isolation; offline npm audit PASS with 0 vulnerabilities. Browser coverage includes exact raw download/reimport same DID, explicit candidate confirmation, Workbench V1 restore redirect, Lock, zero persistence/network traffic, and 390×844 overflow. Automated live Technocore writes: NO. Commit/push/deploy: NO/NO/NO.
+
+## Next Exact Action — V13-02 complete
+
+Product Owner reviews V13-02 Identity Portability and authorizes the next V1.3 phase separately. Do not begin V13-03 automatically.
+
+### V13-01 Guided Onboarding Foundation — 2026-09-07
+
+**Status: COMPLETE / LOCAL PASS / PRODUCT OWNER REVIEW REQUIRED.** Home now enters a consumer-oriented Guided Agent Journey with one primary task per screen and compact Identity, Secure, Verify, Profile, Message, Card, Share, and Complete progress labels. The pure 12-state model records required/skippable status, derives completion only from real facts, and routes new, created, backup-created, verified existing, and personalized Agents to the earliest genuinely incomplete required step. `ATTACH_X_POST` is skippable; opening or rendering a future step cannot complete it.
+
+Create reuses the existing browser-local identity generator and presents its Public DID. Secure reuses the existing encrypted `technocore-agent-backup/v1` creation/download behavior. Verify reuses the existing local importer and requires the restored DID to match the active DID before advancing deterministically to Personalize. Existing My Agent Restore remains intact; an active/restored verified Agent enters the Guided Journey at Personalize rather than recreating identity.
+
+Personalize collects only self-declared browser-memory metadata: required Display Name (1–48 characters), optional valid X username (1–15 letters/numbers/underscores), and optional description/interests (up to 160 characters). It explicitly does not verify real-world identity. No localStorage, sessionStorage, IndexedDB, cookie, server model, database, auth, API, or network destination was added. Refresh or Lock may clear runtime identity/profile/progress without implying deletion; the existing Restore path remains available.
+
+FIRST_MESSAGE, VERIFY_MESSAGE, CARD, SHARE, ATTACH_X_POST, RECORD_CONTRIBUTION, VERIFY_EVIDENCE, and COMPLETE exist in the model but no new publishing, card, X, contribution, or evidence implementation was added. Advanced Secret Key Reveal/Hide/Copy, backup V1 schema/cryptography, DID derivation, signing, nonce, publish ambiguity, exact read-back, Evidence semantics, hostile-content handling, and Live Rooms are unchanged.
+
+Verification: typecheck PASS; 28/28 unit/integration files and 339/339 tests PASS; ESLint PASS with zero warnings; production build PASS with unchanged routes; Chromium E2E 22/22 PASS; offline npm audit PASS with 0 vulnerabilities. The guided Chromium flow covered Create, Public DID, encrypted backup download, same-DID verification, Personalize, truthful FIRST_MESSAGE boundary, zero browser persistence, zero journey network/API traffic, and 390×844 page overflow. Automated live Technocore writes: NO. Commit/push/deploy: NO/NO/NO.
 
 ### Identity UX production release — 2026-09-07
 

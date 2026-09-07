@@ -175,3 +175,62 @@ The following are phase-definition constraints, not completed acceptance claims:
 - The unloaded header shows only **No Agent loaded**. The active header shows only the shortened Public DID, has accessible purpose **Open My Agent**, and navigates to My Agent rather than DID Inspector.
 - Active Home does not show Create/Restore entry actions. Before backup verification its dominant action is backup protection; when Ready to Sign its dominant action is **Open Technocore Rooms** and status cards use beginner-facing Ready/Verified/Not published/Observed/Available terminology.
 - After backup verification, **Open Technocore Rooms** is the dominant action; the existing guided-first-message route remains a subordinate text action. Restore success retains the same Rooms continuation.
+# V13-01 Guided Onboarding Foundation
+
+- A newcomer enters a branded one-primary-task Guided Agent Journey from Home.
+- The canonical 12-step model derives completion from real facts and identifies required versus skippable steps.
+- Create reuses the existing browser-local identity implementation and shows the Public DID.
+- Secure creates/downloads the existing encrypted backup V1; Verify imports locally and requires the same derived DID.
+- An active/restored verified Agent begins at Personalize instead of recreating an identity.
+- Personalize requires a self-declared Display Name of 1–48 characters; optional X username and description are bounded to 15 and 160 characters.
+- Profile/progress are current-memory-only; no secret or non-secret browser persistence is added in V13-01.
+- Later states remain incomplete and do not claim working message, card, share, X, contribution, or verification actions.
+- Secret reveal, backup schema/cryptography, signing, nonce, publish/read-back, Evidence, Live Rooms, dependencies, APIs, and backend behavior remain unchanged.
+- Desktop/mobile layout, keyboard controls, full tests, typecheck, zero-warning lint, production build, Chromium E2E, and dependency audit pass.
+
+# V13-02 Identity Portability
+
+- V13-02 distinguishes Create New Agent, Restore Workbench Agent, and Import Existing Agent without creating another runtime identity owner.
+- Advanced Secret Key download requires explicit warning/confirmation and emits only 64 lowercase seed-hex characters plus an optional final newline.
+- Import accepts only the closed supported registry, validates files locally within documented bounds, shows the derived Public DID, and requires confirmation before activation.
+- Workbench V1 detection reuses the existing Restore path. Raw/Crypto imports are not labeled backup-verified and route to the earliest genuinely incomplete Secure/Verify step.
+- CryptoTelugu V4 asserted DID and public key must exactly match independently derived values. Unknown, malformed, unsupported, corrupted, and mismatching material fails without secret leakage.
+- No import/export secret enters network, persistence, SSR, log, error, diagnostic, Evidence, or server boundaries.
+
+# V13-03 Guided First Signed Message
+
+- Entry requires active signing capability, verified recovery, and Display Name; locked/incomplete Agents route to genuine earlier steps.
+- Draft is deterministic English, editable, based only on approved profile data, and targets `#lobby` without prohibited claims or secrets.
+- Nothing publishes on entry or edit. One Sign & Publish activation creates at most one attempt through shared signing/nonce/publish owners.
+- A response or ambiguous outcome cannot complete verification; no automatic retry or nonce reuse exists.
+- Explicit recheck performs no write and advances only on exact authoritative observation plus independent VALID.
+- INVALID, UNVERIFIABLE, mismatch, not observed, read unavailable, and outcome unknown remain distinct and do not advance.
+- CARD remains locked/unimplemented until VERIFY_MESSAGE genuinely completes.
+
+# V13-04 Verified Agent Card + X Share
+
+- CARD cannot be created without genuine PUBLISHED_AND_VERIFIED journey evidence and authoritative sequence.
+- The explicit public model contains only bounded Display Name, public DID, lobby, authoritative sequence, Ed25519, verification label, and product name.
+- Preview and 1600×900 PNG use actual values and `SIGNATURE VERIFIED`, never identity/trust/reward/contribution claims or secret/session material.
+- Export is deterministic from the public model, browser-local, same-origin branded, PNG, and requires no dependency/server/upload.
+- Three deterministic English drafts remain within 280 characters for maximum supported public fields, include DID, record, production URL and `@flop_labs`, and avoid prohibited claims.
+- Draft remains editable; Copy and encoded X Web Intent work. UI states that the user must attach the card and press Post manually.
+- Download/copy/open do not prove an X post or unlock attachment, contribution, evidence, or COMPLETE.
+
+# V13-05 X Attachment + Contribution Evidence
+
+- ATTACH requires completed Card/Share and deliberate local input; only canonical bounded X status URLs pass, with no fetch or ownership/content claim.
+- Contribution V1 is deterministic, bounded, human-inspectable public JSON reviewed before one explicit shared-stack Sign & Record attempt.
+- `#lobby` is labeled a Workbench onboarding convention, never an official FLOP Labs lane or acceptance mechanism.
+- Response/unknown/not-observed/mismatch/INVALID/UNVERIFIABLE cannot complete; recheck never republishes. Exact authoritative observation plus VALID alone completes evidence.
+- Public JSON/Markdown receipts are deterministic, locally copied/downloaded, limitation-bearing, and secret-free.
+- COMPLETE reflects genuine journey facts and offers Rooms/My Agent/Evidence without claiming official acceptance, identity, reward, eligibility, reputation, or durable history.
+
+# V13-06 Release Candidate QA
+
+- Visible progress is the eight-stage beginner model and exposes the current stage at desktop, laptop, tablet, and mobile widths.
+- Every journey transition has one dominant action; Card creation and X handoff contain no stale phase-lock language.
+- The user must download the Card before Open in X is enabled, and copy/download failures provide safe alternatives without changing evidence facts.
+- Step transitions focus the new task heading. Status and errors retain semantic announcements, keyboard-native controls, and non-color labels.
+- Production-build review covers 1440×900, 1280×720, 768×1024, and 390×844 without page overflow or inaccessible critical actions.
+- Release candidate status never implies release, deployment, live write verification, X ownership, or official contribution acceptance.

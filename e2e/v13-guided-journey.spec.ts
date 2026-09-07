@@ -1,0 +1,119 @@
+import { expect, test } from "@playwright/test";
+import { readFile } from "node:fs/promises";
+
+test("V13-05 completes public contribution evidence only after a second exact VALID read-back", async ({ page }) => {
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  let xIntentUrl = "";
+  await page.context().route("https://x.com/intent/post?**", async (route) => { xIntentUrl=route.request().url(); await route.fulfill({status:200,contentType:"text/html",body:"<title>X compose fixture</title>"}); });
+  const requests: string[] = [];
+  let writeCount = 0;
+  let observed: { did: string; sig: string; nonce: string; text: string } | undefined;
+  page.on("request", (request) => requests.push(request.url()));
+  await page.route("https://technocore.chat/r/lobby/say-signed/**", async (route) => {
+    writeCount += 1;
+    const parts = new URL(route.request().url()).pathname.split("/").map(decodeURIComponent);
+    observed = { did: parts[4]!, sig: parts[5]!, nonce: parts[6]!, text: parts[7]! };
+    await route.fulfill({ status: 202, body: "accepted" });
+  });
+  await page.route("https://technocore.chat/r/lobby?format=json&limit=200", async (route) => {
+    const sequence=writeCount>1?"902":"901";await route.fulfill({ status: 200, contentType: "application/json", json: { room: "lobby", count: observed ? 1 : 0, first_seq: observed ? sequence : null, last_seq: observed ? sequence : "0", messages: observed ? [{ from: observed.did, sig: observed.sig, nonce: observed.nonce, text: observed.text, seq: sequence, ts: "2026-09-07T00:00:00Z" }] : [] } });
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Create New Agent", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Create your agent identity" })).toBeVisible();
+  await expect(page.getByLabel("Onboarding progress")).toBeVisible();
+  await page.getByRole("button", { name: "Create New Agent", exact: true }).click();
+  await page.getByRole("button", { name: "View full DID" }).click();
+  const originalDid = await page.locator(".public-did strong").textContent();
+  expect(originalDid).toMatch(/^did:key:z6Mk/);
+
+  const password = "v13-guided-recovery-passphrase";
+  await page.getByLabel("Backup Password").fill(password);
+  await page.getByRole("button", { name: "Create Encrypted Backup" }).click();
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download Encrypted Backup" }).click();
+  const backupPath = await (await download).path();
+  expect(backupPath).not.toBeNull();
+  await page.getByLabel("Encrypted Backup").setInputFiles(backupPath!);
+  await page.getByLabel("Backup Password").fill(password);
+  await page.getByRole("button", { name: "Verify My Backup" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Personalize your Agent" })).toBeVisible();
+
+  await page.getByLabel(/Display Name/).fill("FLOP Explorer");
+  await page.getByLabel(/X username/).fill("@flop_explorer");
+  await page.getByLabel(/Short description/).fill("Learning how signed public evidence works.");
+  await page.getByRole("button", { name: "Save Profile and Continue" }).click();
+  await expect(page.getByRole("heading", { name: "Your first signed message" })).toBeVisible();
+  await expect(page.getByText("#lobby", { exact: true })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Message" })).toHaveValue(/FLOP Explorer/);
+  await expect(page.getByRole("textbox", { name: "Message" })).toHaveValue(/Learning how signed public evidence works\./);
+  expect(writeCount).toBe(0);
+  await page.getByRole("textbox", { name: "Message" }).fill("Hello Technocore! I'm FLOP Explorer. I am learning about verifiable messages.");
+  await page.getByRole("button", { name: "Sign & Publish" }).click();
+  await expect(page.getByRole("heading", { name: "Check your signed message" })).toBeVisible();
+  await expect(page.getByText("Publication is not verified yet.")).toBeVisible();
+  expect(writeCount).toBe(1);
+  await page.getByRole("button", { name: "Check publication" }).click();
+  await expect(page.getByRole("heading", { name: "Create your Agent Card", exact: true })).toBeVisible();
+  await expect(page.getByText("Published ✓")).toBeVisible();
+  await expect(page.getByText("Observed on Technocore ✓")).toBeVisible();
+  await expect(page.getByText("Signature verified ✓")).toBeVisible();
+  await expect(page.getByText("#901", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Build a public image from this verified record evidence/)).toBeVisible();
+  expect(writeCount).toBe(1);
+  await page.getByRole("button", { name: "Create Agent Card" }).click();
+  await expect(page.getByRole("heading", { name: "Share your verified first record" })).toBeFocused();
+  await expect(page.getByLabel("Verified Agent Card")).toContainText("FLOP Explorer");
+  await expect(page.getByLabel("Verified Agent Card")).toContainText("#lobby · #901");
+  await expect(page.getByLabel("Verified Agent Card")).toContainText("SIGNATURE VERIFIED ✓");
+  await expect(page.getByLabel("X post")).toHaveValue(/@flop_labs/);
+  await expect(page.getByLabel("X post")).toHaveValue(/https:\/\/flop-agent-workbench\.vercel\.app/);
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 1280, height: 720 }, { width: 768, height: 1024 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    if (viewport.width === 390) await expect(page.getByLabel("Onboarding progress").getByText("Share", { exact: true })).toBeVisible();
+    await page.screenshot({ path: `test-results/v13-06/share-${viewport.width}x${viewport.height}.png`, fullPage: true });
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.getByRole("button", { name: "Open in X" })).toBeDisabled();
+  const cardDownloadEvent=page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download Card" }).click();
+  const cardDownload=await cardDownloadEvent;expect(cardDownload.suggestedFilename()).toBe("flop-technocore-agent-card.png");
+  const cardPath=await cardDownload.path();const png=await readFile(cardPath!);expect(png.subarray(1,4).toString()).toBe("PNG");expect(png.readUInt32BE(16)).toBe(1600);expect(png.readUInt32BE(20)).toBe(900);
+  await expect(page.getByText(/Agent Card downloaded/)).toBeVisible();
+  const originalPost=await page.getByLabel("X post").inputValue();await page.getByRole("button",{name:"Try another draft"}).click();await expect(page.getByLabel("X post")).not.toHaveValue(originalPost);
+  await page.getByLabel("X post").fill(`${await page.getByLabel("X post").inputValue()}\nEdited manually.`);
+  await page.getByRole("button",{name:"Copy Post"}).click();await expect(page.getByText("Post copied.")).toBeVisible();
+  await page.setViewportSize({width:390,height:844});await expect(page.getByLabel("Verified Agent Card")).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBe(await page.evaluate(()=>document.documentElement.clientWidth));await page.setViewportSize({width:1440,height:900});
+  const popupEvent=page.waitForEvent("popup");await page.getByRole("button",{name:"Open in X"}).click();const popup=await popupEvent;await popup.waitForLoadState();expect(xIntentUrl).toContain("https://x.com/intent/post?text=");expect(decodeURIComponent(new URL(xIntentUrl).searchParams.get("text")!)).toContain("Edited manually.");await popup.close();
+  await expect(page.getByRole("heading",{name:"Add your X post"})).toBeVisible();
+  await page.getByLabel("X Post URL").fill("https://x.com/FLOP_Explorer/status/123456789?s=20#share");
+  await page.getByRole("button",{name:"Continue",exact:true}).click();
+  await expect(page.getByRole("heading",{name:"Review your contribution record"})).toBeVisible();
+  await expect(page.getByText("https://x.com/FLOP_Explorer/status/123456789",{exact:true})).toBeVisible();
+  await expect(page.getByText(/Workbench onboarding convention/)).toBeVisible();expect(writeCount).toBe(1);
+  await page.getByRole("button",{name:"Sign & Record"}).click();await expect(page.getByRole("heading",{name:"Verify your contribution record"})).toBeVisible();expect(writeCount).toBe(2);
+  await page.getByRole("button",{name:"Check contribution"}).click();await expect(page.getByRole("heading",{name:"Your Agent is ready"})).toBeVisible();expect(writeCount).toBe(2);
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 1280, height: 720 }, { width: 768, height: 1024 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    if (viewport.width === 390) await expect(page.getByLabel("Onboarding progress").getByText("Ready", { exact: true })).toBeVisible();
+    await page.screenshot({ path: `test-results/v13-06/ready-${viewport.width}x${viewport.height}.png`, fullPage: true });
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.getByRole("button", { name: "Enter Technocore Rooms" }).scrollIntoViewIfNeeded();
+  await expect(page.getByRole("button", { name: "Enter Technocore Rooms" })).toBeVisible();
+  await expect(page.getByText("Contribution record published ✓")).toBeVisible();await expect(page.getByText("Contribution signature verified ✓")).toBeVisible();await expect(page.getByText(/does not establish real-world identity/)).toBeVisible();
+  const jsonEvent=page.waitForEvent("download");await page.getByRole("button",{name:"Download JSON"}).click();const jsonPath=await (await jsonEvent).path();expect(await readFile(jsonPath!,"utf8")).toContain('"schema": "flop-contribution-evidence-receipt/v1"');
+  const markdownEvent=page.waitForEvent("download");await page.getByRole("button",{name:"Download Markdown"}).click();const markdownPath=await (await markdownEvent).path();expect(await readFile(markdownPath!,"utf8")).toContain("# FLOP Contribution Evidence Receipt");
+  await page.getByRole("button",{name:"Copy Evidence"}).click();await expect(page.getByText("Evidence copied.")).toBeVisible();
+  await page.getByRole("button",{name:"Enter Technocore Rooms"}).click();await expect(page.locator(".rooms-chat")).toBeVisible();
+  await page.getByRole("button",{name:"My Agent",exact:true}).click();await expect(page.getByRole("heading",{name:"My Agent",exact:true})).toBeVisible();
+  await page.getByRole("button",{name:"Evidence",exact:true}).click();await expect(page.getByRole("heading",{name:"Observed Evidence",exact:true})).toBeVisible();
+
+  expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length }))).toEqual({ local: 0, session: 0 });
+  expect(requests.filter((url) => url.includes("say-signed"))).toHaveLength(2);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(await page.evaluate(() => document.documentElement.clientWidth));
+});

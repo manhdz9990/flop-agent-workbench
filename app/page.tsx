@@ -11,6 +11,9 @@ import type { ProtocolRecord } from "../lib/protocol";
 import { createEvidenceReceipt, createReceiptDownload, downloadReceiptLocally, serializeEvidenceReceiptJson, serializeEvidenceReceiptMarkdown, type EvidenceReceiptFormat } from "../lib/receipt";
 import type { LocalIdentitySession } from "../lib/identity";
 import { OnboardingFlow, type OnboardingEntry } from "./onboarding";
+import { GuidedJourney } from "./guided-journey";
+import { IdentityImport } from "./identity-import";
+import type { AgentProfile } from "../lib/onboarding";
 import { RoomsChat } from "./rooms-chat";
 import { MyAgent } from "./my-agent";
 import { EvidenceWorkspace } from "./evidence";
@@ -20,7 +23,7 @@ import { SessionNonceReservations } from "../lib/signing";
 import { TechnicalEvidence, VerificationOverview, VerificationStages } from "./verification-result";
 
 type Task = "EXPLORE" | "MESSAGE" | "EXPORT" | "DID";
-type Screen = "START" | "ONBOARD" | "MY_AGENT" | "EVIDENCE" | "ROOMS" | "DEVTOOLS" | "EXPLORE" | "INPUT" | "TRANSCRIPT" | "PIPELINE";
+type Screen = "START" | "JOURNEY" | "IMPORT_IDENTITY" | "ONBOARD" | "MY_AGENT" | "EVIDENCE" | "ROOMS" | "DEVTOOLS" | "EXPLORE" | "INPUT" | "TRANSCRIPT" | "PIPELINE";
 interface Analysis { readonly task: Task; readonly identity: string; readonly diagnostics?: TranscriptDiagnostics; readonly pipeline: VerificationPipeline; readonly did?: string }
 
 const tasks: readonly { task: Task; title: string; hint: string; primary?: boolean }[] = [
@@ -41,6 +44,7 @@ export default function Home() {
   const [file, setFile] = useState<File>(); const [rooms, setRooms] = useState<readonly RoomObservation[]>();
   const [analysis, setAnalysis] = useState<Analysis>(); const [busy, setBusy] = useState(false); const [error, setError] = useState<OperationalError>();
   const [activeIdentity, setActiveIdentity] = useState<LocalIdentitySession>(); const [onboardingEntry, setOnboardingEntry] = useState<OnboardingEntry>("CREATE");
+  const [agentProfile, setAgentProfile] = useState<AgentProfile>();
   const [onboardingStarted, setOnboardingStarted] = useState(false); const [onboardingGeneration, setOnboardingGeneration] = useState(0); const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [observedEvidence, setObservedEvidence] = useState<readonly EvidenceActivityEntry[]>([]);
   const publishLifecycle = useRef<{ reservations: SessionNonceReservations; attempts: PublishAttemptSession }>(undefined);
@@ -52,6 +56,8 @@ export default function Home() {
   function start(next: Task) { setTask(next); setError(undefined); setAnalysis(undefined); if (next === "EXPLORE") { setScreen("EXPLORE"); if (rooms === undefined) void discoverRooms(); } else setScreen("INPUT"); }
   function goStart() { setScreen("START"); setError(undefined); }
   function openOnboarding(entry: OnboardingEntry) { if (onboardingStarted && entry !== onboardingEntry) setOnboardingGeneration((value) => value + 1); setOnboardingEntry(entry); setOnboardingStarted(true); setScreen("ONBOARD"); }
+  function openJourney() { setError(undefined); setScreen("JOURNEY"); }
+  function openIdentityImport() { setError(undefined); setScreen("IMPORT_IDENTITY"); }
   function openRooms() { setError(undefined); setScreen("ROOMS"); }
   function openMyAgent() { setError(undefined); setScreen("MY_AGENT"); }
   function openEvidence() { setError(undefined); setScreen("EVIDENCE"); }
@@ -76,9 +82,11 @@ export default function Home() {
   const activeSession = activeIdentity && !activeIdentity.isLocked ? activeIdentity : undefined;
   return <main className={`workbench-app${sidebarCollapsed ? " sidebar-collapsed" : ""}`}><Header screen={screen} onStart={goStart} onRooms={openRooms} onAgent={openMyAgent} onEvidence={openEvidence} onDevTools={openDevTools} identity={activeSession} collapsed={sidebarCollapsed} onCollapse={() => setSidebarCollapsed((value) => !value)} />
     <div className="workbench-workspace">
-    {screen === "START" && <StartScreen activeIdentity={activeIdentity && !activeIdentity.isLocked ? activeIdentity : undefined} evidence={observedEvidence} onChoose={start} onOnboard={openOnboarding} onRooms={openRooms} onAgent={openMyAgent} onEvidence={openEvidence} onDevTools={openDevTools} />}
-    {onboardingStarted && <div className="onboarding-host" hidden={screen !== "ONBOARD"}><OnboardingFlow key={onboardingGeneration} entry={onboardingEntry} identity={activeIdentity} reservations={publishLifecycle.current.reservations} attempts={publishLifecycle.current.attempts} onIdentityChange={setActiveIdentity} onBack={goStart} onInspectDid={openDidInspector} onDebugMessage={openMessageDebugger} onEvidenceObserved={recordEvidence} onMyAgent={openMyAgent} onExploreRooms={() => start("EXPLORE")} /></div>}
-    {screen === "MY_AGENT" && <MyAgent identity={activeIdentity} onBack={goStart} onCreate={() => openOnboarding("CREATE")} onImport={() => openOnboarding("IMPORT")} onBackup={() => openOnboarding("MANAGE")} onRooms={openRooms} onInspectDid={openDidInspector} onIdentityChange={setActiveIdentity} />}
+    {screen === "START" && <StartScreen activeIdentity={activeIdentity && !activeIdentity.isLocked ? activeIdentity : undefined} profile={agentProfile} evidence={observedEvidence} onChoose={start} onJourney={openJourney} onOnboard={openOnboarding} onRooms={openRooms} onAgent={openMyAgent} onEvidence={openEvidence} onDevTools={openDevTools} />}
+    {screen === "JOURNEY" && <GuidedJourney identity={activeIdentity} profile={agentProfile} reservations={publishLifecycle.current.reservations} attempts={publishLifecycle.current.attempts} onIdentityChange={setActiveIdentity} onProfileChange={setAgentProfile} onBack={goStart} onRestore={() => openOnboarding("IMPORT")} onImportExisting={openIdentityImport} onRooms={openRooms} onMyAgent={openMyAgent} onEvidence={openEvidence} onEvidenceObserved={recordEvidence} />}
+    {screen === "IMPORT_IDENTITY" && <IdentityImport onBack={openJourney} onRestoreWorkbench={() => openOnboarding("IMPORT")} onConfirm={(identity) => { setActiveIdentity(identity); setScreen("JOURNEY"); }} />}
+    {onboardingStarted && <div className="onboarding-host" hidden={screen !== "ONBOARD"}><OnboardingFlow key={onboardingGeneration} entry={onboardingEntry} identity={activeIdentity} reservations={publishLifecycle.current.reservations} attempts={publishLifecycle.current.attempts} onIdentityChange={setActiveIdentity} onBack={goStart} onInspectDid={openDidInspector} onDebugMessage={openMessageDebugger} onEvidenceObserved={recordEvidence} onMyAgent={openMyAgent} onExploreRooms={onboardingEntry === "IMPORT" ? openJourney : () => start("EXPLORE")} /></div>}
+    {screen === "MY_AGENT" && <MyAgent identity={activeIdentity} onBack={goStart} onCreate={() => openOnboarding("CREATE")} onImport={() => openOnboarding("IMPORT")} onImportExisting={openIdentityImport} onBackup={() => openOnboarding("MANAGE")} onRooms={openRooms} onInspectDid={openDidInspector} onIdentityChange={setActiveIdentity} />}
     {screen === "EVIDENCE" && <EvidenceWorkspace entries={observedEvidence} activeDid={activeIdentity && !activeIdentity.isLocked ? activeIdentity.publicIdentity.did : undefined} onBack={goStart} onRooms={() => openRooms()} onInspectMessage={openMessageDebugger} />}
     {screen === "ROOMS" && <RoomsChat identity={activeIdentity} reservations={publishLifecycle.current.reservations} attempts={publishLifecycle.current.attempts} onBack={goStart} onCreateOrImport={() => openOnboarding("CREATE")} onSecureBackup={() => openOnboarding("MANAGE")} onInspectMessage={openMessageDebugger} onEvidenceObserved={recordEvidence} />}
     {screen === "DEVTOOLS" && <section className="flow-page app-tools-workspace" aria-labelledby="inspect-debug-title"><div className="eyebrow">Workbench Utilities</div><h1>Developer Tools</h1><DeveloperTools onChoose={start} label="TOOLS" /></section>}
@@ -111,8 +119,8 @@ function Header({ screen, onStart, onRooms, onAgent, onEvidence, onDevTools, ide
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const did = identity && !identity.isLocked ? identity.publicIdentity.did : undefined;
   const shortDid = did ? `${did.slice(8, 12)}…${did.slice(-4)}` : undefined;
-  const current = screen === "ROOMS" || screen === "EXPLORE" ? "rooms" : screen === "MY_AGENT" || screen === "ONBOARD" ? "agent" : screen === "EVIDENCE" ? "evidence" : screen === "DEVTOOLS" || screen === "INPUT" || screen === "TRANSCRIPT" || screen === "PIPELINE" ? "tools" : "home";
-  const workspaceTitle = current === "rooms" ? "Rooms" : current === "agent" ? (screen === "ONBOARD" ? "My Agent / Setup" : "My Agent") : current === "evidence" ? "Evidence" : current === "tools" ? "Developer Tools" : "Home";
+  const current = screen === "ROOMS" || screen === "EXPLORE" ? "rooms" : screen === "MY_AGENT" || screen === "ONBOARD" || screen === "JOURNEY" || screen === "IMPORT_IDENTITY" ? "agent" : screen === "EVIDENCE" ? "evidence" : screen === "DEVTOOLS" || screen === "INPUT" || screen === "TRANSCRIPT" || screen === "PIPELINE" ? "tools" : "home";
+  const workspaceTitle = current === "rooms" ? "Rooms" : current === "agent" ? (screen === "ONBOARD" || screen === "JOURNEY" || screen === "IMPORT_IDENTITY" ? "My Agent / Setup" : "My Agent") : current === "evidence" ? "Evidence" : current === "tools" ? "Developer Tools" : "Home";
   const select = (run: () => void) => () => { setMobileMenuOpen(false); run(); };
   const item = (key: string, icon: WorkbenchIconName, label: string, run: () => void) => <button type="button" className="nav-link" aria-current={current === key ? "page" : undefined} aria-label={label} title={collapsed ? label : undefined} onClick={select(run)}><span className="nav-icon"><WorkbenchIcon name={icon}/></span><span className="nav-label">{label}</span></button>;
   const resource = (icon: WorkbenchIconName, label: string, href: string) => <a className="nav-link resource-link" href={href} target="_blank" rel="noopener noreferrer" aria-label={`${label} (opens in a new tab)`} title={collapsed ? label : undefined} onClick={() => setMobileMenuOpen(false)}><span className="nav-icon"><WorkbenchIcon name={icon}/></span><span className="nav-label">{label} ↗</span></a>;
@@ -123,15 +131,17 @@ function Header({ screen, onStart, onRooms, onAgent, onEvidence, onDevTools, ide
     <div className="app-nav-secondary">{item("tools", "tools", "Developer Tools", onDevTools)}<div className="resource-links"><span className="resource-label nav-label">Resources</span>{resource("labs", "FLOP Labs", FLOP_LABS_URL)}{resource("technocore", "Technocore Chat", TECHNOCORE_CHAT_URL)}{resource("docs", "Docs", FLOP_DOCS_URL)}{resource("author", "Built by Manh100", AUTHOR_URL)}</div></div>
   </nav><button className="sidebar-collapse" type="button" onClick={onCollapse} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : undefined}><span aria-hidden="true">{collapsed ? "›" : "‹"}</span><span className="nav-label">Collapse</span></button></aside><header className="workspace-header"><button className="mobile-menu-toggle" type="button" aria-expanded={mobileMenuOpen} aria-controls="workbench-navigation" aria-label={mobileMenuOpen ? "Close Workbench menu" : "Open Workbench menu"} onClick={() => setMobileMenuOpen((open) => !open)}><span aria-hidden="true">{mobileMenuOpen ? "×" : "☰"}</span></button><img className="mobile-brand-logo" src="/brand/flop-logo.png" width="400" height="400" alt="" /><div><span className="workspace-kicker">FLOP Agent Workbench</span><strong>{workspaceTitle}</strong></div>{did ? <button className="identity-context" type="button" aria-label="Open My Agent" onClick={onAgent}><strong className="mono">{shortDid}</strong></button> : <div className="identity-context status-only"><span>No Agent loaded</span></div>}</header></>;
 }
-interface StartScreenProps { activeIdentity?: LocalIdentitySession; evidence: readonly EvidenceActivityEntry[]; onChoose(task: Task): void; onOnboard(entry: OnboardingEntry): void; onRooms(): void; onAgent(): void; onEvidence(): void; onDevTools(): void }
+interface StartScreenProps { activeIdentity?: LocalIdentitySession; profile?: AgentProfile; evidence: readonly EvidenceActivityEntry[]; onChoose(task: Task): void; onJourney(): void; onOnboard(entry: OnboardingEntry): void; onRooms(): void; onAgent(): void; onEvidence(): void; onDevTools(): void }
 function StartScreen(props: StartScreenProps) {
   const identity = props.activeIdentity; const ready = identity?.backupVerificationStatus === "VERIFIED"; const evidenceAvailable = props.evidence.length > 0;
   const verified = identity ? props.evidence.some((entry) => entry.source === "READBACK_VERIFIED" && entry.writer === identity.publicIdentity.did && entry.observationState === "PUBLISHED_AND_VERIFIED") : false;
   const next = !identity
-    ? { title: "Create your Agent", copy: "Create a new Technocore signing identity.", label: "Create New Agent", run: () => props.onOnboard("CREATE"), tone: "required" }
+    ? { title: "Create your Agent", copy: "Follow a guided setup for identity, recovery, and your agent profile.", label: "Create New Agent", run: props.onJourney, tone: "required" }
     : !ready
       ? { title: "Secure your backup", copy: "Verify an encrypted backup before signing.", label: "Secure Backup →", run: () => props.onOnboard("MANAGE"), tone: "required" }
-      : { title: "Agent ready", copy: "Your Public DID is active and ready to sign Technocore messages.", label: "Open Technocore Rooms →", run: props.onRooms, tone: "verified" };
+      : !props.profile
+        ? { title: "Personalize your Agent", copy: "Add a self-declared display name before your first guided message.", label: "Continue Guided Journey →", run: props.onJourney, tone: "required" }
+        : { title: "Agent ready", copy: "Your Public DID is active and ready to sign Technocore messages.", label: "Open Technocore Rooms →", run: props.onRooms, tone: "verified" };
   const cards: readonly { title: string; icon: WorkbenchIconName; status: string; support?: string; label?: string; run?: () => void; tone: string }[] = [
     { title: "Identity", icon: "agent", status: identity ? "Ready" : "Not loaded", support: identity ? undefined : "Restore or create", label: identity ? "My Agent →" : "Restore →", run: identity ? props.onAgent : () => props.onOnboard("IMPORT"), tone: identity ? "verified" : "neutral" },
     { title: "Backup", icon: "backup", status: identity ? ready ? "Verified" : "Required" : "Locked", support: identity ? undefined : "Needs Agent", label: identity ? ready ? "Review →" : "Secure →" : undefined, run: identity ? () => props.onOnboard("MANAGE") : undefined, tone: identity ? ready ? "verified" : "required" : "neutral" },

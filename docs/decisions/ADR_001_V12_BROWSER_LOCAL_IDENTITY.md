@@ -31,6 +31,14 @@ The original V12-01 boundary prohibited rendering raw secret material. The Produ
 
 The rationale is user ownership: an informed owner can recover and control the key without turning FLOP into a key-custody service. The narrow interaction preserves the browser-local boundary and makes the exceptional exposure conspicuous and reversible.
 
+## V13-02 identity-portability amendment
+
+Explicit Product Owner authorization on 2026-09-07 supersedes the raw-secret prohibition only for deliberate, high-friction local portability. My Agent may download the already-held 32-byte Ed25519 seed as exactly 64 lowercase hexadecimal characters plus one final newline in `technocore-agent-secret.txt`. The payload has no DID, password, wrapper, metadata, or signature. Encrypted Backup remains the recommended recovery method.
+
+`Import Existing Agent` is a bounded client-only adapter boundary distinct from `Restore Workbench Agent`. It supports plain 64-hex seed files and the independently reviewed CryptoTelugu browser-backup V4 format; Workbench Backup V1 detection redirects to and reuses the existing importer. Imported material is validated before becoming active, its public key and `did:key` are independently derived, asserted CryptoTelugu DID/public-key values must match, and the user must confirm the derived Public DID. Raw and third-party imports enter as `NOT_VERIFIED` and proceed to Secure/Verify; FLOP does not fabricate backup verification.
+
+This amendment permits no raw-secret paste field, persistence, server upload/import, network fetch from file content, telemetry, diagnostics inclusion, Evidence inclusion, server signing, or additional cryptographic representation. JavaScript memory zeroization remains best effort.
+
 ## Consequences
 
 V12-01 adds no UI, persistence, signing, publish function, fetch, API route, server relay, or Technocore write. Future signing must consume a separately reviewed narrow capability and requires separate phase authorization.

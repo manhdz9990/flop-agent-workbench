@@ -52,7 +52,7 @@ The V1.1 inspection pipeline remains unchanged. V1.2 may add a separate browser-
 
 Import follows the inverse local boundary: validate a bounded, versioned envelope before expensive cryptography; decrypt and authenticate in the browser; validate the decrypted seed; re-derive the public key and DID; and require the derived DID to match the public envelope. Secret-bearing runtime types remain separate from serializable public models. Unlocked secret material is session-memory only and must not enter application-server requests, browser persistence, URLs, logs, telemetry, or analytics.
 
-Identity ownership outlives an unlocked runtime session conceptually: clearing memory does not prove that the Agent no longer exists. The only approved restore path is the same V1 import boundary above, using the user-owned Encrypted Backup plus Backup Password. Successful import creates the existing verified runtime session for the same derived DID; it does not create a new identity, persist an automatic login, contact the Workbench server, or introduce a second recovery model.
+Identity ownership outlives an unlocked runtime session conceptually: clearing memory does not prove that the Agent no longer exists. Workbench recovery remains the same V1 import boundary above, using the user-owned Encrypted Backup plus Backup Password. V13-02 additionally permits bounded local identity-portability adapters for a plain 32-byte Ed25519 seed and the reviewed CryptoTelugu V4 browser backup. Successful import loads the single existing runtime identity holder; it does not create a new identity, persist an automatic login, or contact the Workbench server.
 
 V12-01 has no network-write path. A future separately authorized publishing phase must use an explicit user action and a fixed browser-direct Technocore endpoint: `Browser → fixed Technocore write endpoint`. The forbidden topology is `Browser → Workbench server → Technocore write`.
 
@@ -71,3 +71,31 @@ Local attempt states are `NOT_ATTEMPTED → ATTEMPTED → RESPONSE_RECEIVED` or 
 ## V1.2 post-validation surface sequencing
 
 V12-08A through V12-08C are presentation/orchestration adapters over the existing fixed-origin reader, browser-local identity, signing, publish, read-back, verifier, diagnostics, and receipt modules. They must not fork those engines or introduce persistence, server custody, server write relays, automatic polling, crawlers, or global archives. V12-08D audits their combined boundaries before V12-09 visual polish. V12-10 is final regression/release preflight; release review and deployment remain separately authorized.
+
+## V1.3 V13-01 onboarding foundation
+
+The pure `lib/onboarding` model orders the canonical journey, records required versus skippable steps, derives completed steps from explicit facts, and selects the earliest incomplete required step. The Guided Journey is a client presentation/orchestration layer over the single existing page-owned `LocalIdentitySession`; it does not create another identity, backup, signing, nonce, publish, read-back, Evidence, or Rooms engine.
+
+V13-01 profile metadata and journey presentation state remain in React memory only. No browser persistence, server model, API, database, authentication, or network destination is introduced. Later message, card, share, X, contribution, and evidence states are reserved in the model but have no completion transition without future approved domain facts.
+
+## V1.3 V13-02 identity portability
+
+`File → bounded detector → exact adapter → independent public-key/DID derivation → user DID confirmation → existing LocalIdentitySession`
+
+The format registry is deliberately closed: Workbench Backup V1, CryptoTelugu browser backup V4, and plain 64-hex Ed25519 seed text. Unknown formats are not guessed. Workbench V1 uses the existing restore implementation. Raw/Crypto imports create a `NOT_VERIFIED` session and route to Secure/Verify. No adapter owns persistent state, calls a network, or duplicates the page-owned identity holder.
+
+## V1.3 V13-03 guided first signed message
+
+Guided publishing is an orchestration consumer of the same page-owned `LocalIdentitySession`, `SessionNonceReservations`, `PublishAttemptSession`, `publishPreparedMessage`, and `verifyPublishedReadback` used by accepted product flows. FIRST_MESSAGE becomes complete only from a recorded publish result; VERIFY_MESSAGE becomes complete only from exact authoritative observation plus independent `VALID`. Rechecking calls read-back only. CARD is merely the next locked state and has no implementation.
+
+## V1.3 V13-04 public Agent Card and manual X share
+
+`Verified journey evidence → PublicAgentCard → DOM preview / local Canvas PNG / deterministic X draft`
+
+The card model is an explicit public DTO and never receives `LocalIdentitySession`, seed, password, backup, nonce, signature, or ciphertext. Canvas export is browser-local at 1600×900 PNG and loads only the same-origin official FLOP logo. X sharing constructs only `https://x.com/intent/post?text=…`; there is no OAuth, X API, upload, automatic post, or server relay. CARD completion means the public artifact exists; SHARE/X_OPENED means only that the manual compose flow was opened, never that a post or contribution exists.
+
+## V1.3 V13-05 public contribution evidence
+
+`Strict local X URL normalization → public contribution/v1 JSON review → existing local sign/nonce/publish → existing exact read-back/VALID → contribution evidence receipt → COMPLETE`
+
+No approved contribution lane existed. V13-05 therefore reuses `#lobby` as a narrow Workbench onboarding convention, explicitly not a protocol-wide or FLOP Labs acceptance lane. The record/receipt are public DTOs only. The existing page-owned signing, reservation, attempt, read-back, Evidence and navigation owners are reused; no server, crawler, X verification, database, or persistence is added.

@@ -26,8 +26,8 @@ describe("V12-08D combined integration and security boundaries", () => {
     expect(page.match(/useState<LocalIdentitySession>/g)).toHaveLength(1);
     expect(page.match(/new SessionNonceReservations\(\)/g)).toHaveLength(1);
     expect(page.match(/new PublishAttemptSession\(reservations\)/g)).toHaveLength(1);
-    expect(page.match(/reservations=\{publishLifecycle\.current\.reservations\}/g)).toHaveLength(2);
-    expect(page.match(/attempts=\{publishLifecycle\.current\.attempts\}/g)).toHaveLength(2);
+    expect(page.match(/reservations=\{publishLifecycle\.current\.reservations\}/g)).toHaveLength(3);
+    expect(page.match(/attempts=\{publishLifecycle\.current\.attempts\}/g)).toHaveLength(3);
     expect(onboarding).not.toMatch(/new SessionNonceReservations|new PublishAttemptSession|createPublishLifecycle/);
     expect(rooms).not.toMatch(/new SessionNonceReservations|new PublishAttemptSession|createLifecycle/);
   });

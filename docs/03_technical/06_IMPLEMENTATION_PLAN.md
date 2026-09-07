@@ -60,3 +60,32 @@ V12-09 UI/UX Polish → V12-10 Final Regression & Release Preflight → Final Re
 ## V1.2 identity ownership and beginner UX amendment — 2026-09-07
 
 Bounded scope: clarify Public DID, Secret Key, signing, recovery, proof limits, and portability; add an explicitly confirmed and masked-by-default browser-only Advanced Secret Key reveal/copy path; preserve Encrypted Backup as the recommended path; pretty-print the unchanged V1 backup envelope; and retain all existing signing, nonce, Rooms, backend, verification, and publish behavior. Completion requires identity/security tests, the full repository gate, documentation reconciliation, Product Owner manual review, and no deployment.
+# V1.3 — Guided Agent Journey & Contribution Evidence
+
+## V13-01 — Guided Onboarding Foundation
+
+Status: COMPLETE / LOCAL PASS. Product Owner review required before any V13-02 work or release action.
+
+Implement the deterministic 12-state journey model, newcomer journey shell, existing Create/Secure/Verify capability integration, bounded browser-memory-only Personalize state, and earliest-incomplete routing. Reserve but do not implement guided messaging, cards, X sharing, contributions, evidence verification, or Identity Portability. Run the complete gate and stop before V13-02, commit, push, or deployment.
+
+## V13-02 — Identity Portability
+
+Status: COMPLETE / LOCAL PASS. Product Owner review required before any later V1.3 phase or release action.
+
+Implement the closed identity-adapter registry, advanced raw Secret Key download, Workbench V1 restore redirection, reviewed CryptoTelugu V4 local decryption/consistency checks, plain-seed local import, explicit Public DID confirmation, and earliest-incomplete onboarding routing. Preserve the single runtime identity owner and all backend, API, signing, nonce, Rooms, and persistence boundaries. Complete with deterministic synthetic fixtures, full repository gates, documentation/status updates, and no commit, push, or deployment.
+
+## V13-03 — Guided First Signed Message
+
+Status: COMPLETE / LOCAL PASS. Product Owner review required. Reuse the existing page-owned identity, nonce, publish-attempt, browser-direct transport, read-back, and verification modules for one editable deterministic `#lobby` introduction. Advance to locked CARD only after exact observed + VALID. No Agent Card, Rooms redesign, API, dependency, commit, push, or deployment.
+
+## V13-04 — Verified Agent Card + X Share
+
+Status: COMPLETE / LOCAL PASS. Product Owner review required. Derive a minimal public card DTO only after verified first-message evidence, render a responsive branded preview, export a same-model 1600×900 PNG locally, and provide bounded editable X drafts with Copy/Open Intent/manual attachment instructions. Stop with X URL attachment and contribution states locked. No dependency, backend, protocol, commit, push, or deployment.
+
+## V13-05 — X Attachment + Signed Contribution Evidence + Agent Ready
+
+Status: COMPLETE / LOCAL PASS. Strictly normalize a user-provided X status reference, review deterministic public `flop-agent-contribution/v1` JSON, explicitly sign/publish through shared runtime owners to the documented `#lobby` Workbench convention, require exact read-back plus VALID, produce local JSON/Markdown receipt, and expose honest Agent Ready navigation. No release action.
+
+## V13-06 — End-to-End Product QA + UX Polish + Release Candidate
+
+Status: COMPLETE / LOCAL PASS. Review the complete newcomer, Restore/Import, Lock, failure, responsive, accessibility, and security journeys as one product. Permit only bounded presentation corrections. A release candidate still requires Product Owner manual acceptance of any deliberately real Technocore/X actions before release authorization.

@@ -85,3 +85,25 @@ The completed V1.2 surface was re-audited for secret exfiltration, malformed bac
 One reproducible phase-local risk was corrected: React render state alone did not synchronously exclude duplicate async actions, and an in-flight signing completion could restore an old prepared descriptor after its reviewed input changed. The onboarding orchestration now uses one synchronous operation holder plus monotonic input revision checks. Domain nonce reservations, immutable descriptors, burn-before-fetch, and all transport/verifier semantics remain unchanged.
 
 Existing `nosniff`, `no-referrer`, frame-deny, and restrictive Permissions Policy headers remain. A strict CSP is deferred to release architecture review: Next client framework script execution needs a deliberately tested nonce/hash/build policy, and a speculative static policy could break approved behavior or encode unresolved deployment assumptions.
+
+## V13-01 onboarding foundation
+
+V13-01 adds only non-secret, self-declared profile metadata held in current React memory. It adds no persistence or network transport. Display Name, X username, and description are bounded and rendered as inert text; they do not establish real-world identity, trust, reputation, rewards, or eligibility. Existing Secret Key, Backup Password, backup V1, local signing, nonce, fixed-origin publishing/read-back, and Live Rooms controls remain unchanged.
+
+## V13-02 untrusted identity files
+
+- Identity files are capped at 32 KiB before JSON parsing or KDF work. Workbench V1 retains its stricter existing 16 KiB parser limit.
+- JSON adapters require exact own-key schemas; algorithms, versions, encodings, decoded lengths, and KDF parameters are allowlisted. Encoded fields are canonical unpadded base64url and individually capped at 512 characters.
+- CryptoTelugu V4 is accepted only with `Ed25519`, `PBKDF2-SHA256`, exactly 250,000 iterations, a 16-byte salt, 12-byte IV, 64-byte authenticated ciphertext, and the reviewed 48-byte Ed25519 PKCS#8 plaintext form. Passwords are 1–1024 UTF-8 bytes.
+- Plain seed input is file-only: after stripping surrounding ASCII whitespace it must be exactly 64 hexadecimal characters/32 bytes. Structured additions and non-ASCII padding are rejected.
+- Decrypted/imported seeds independently derive the public key and DID. Any asserted metadata mismatch rejects and locks the candidate. A candidate is not installed until explicit DID confirmation.
+- Files drive no fetch, URL, code execution, persistence, logging, diagnostics, Evidence, or server operation. Errors contain categories only, never secret or password input.
+- Residual risk: a deliberate plain-text download exists on the user's filesystem and browser/JavaScript memory cannot guarantee physical zeroization. High-friction copy explains public sharing, untrusted upload, GitHub, and screenshot risks; encrypted backup remains recommended.
+
+## V13-04 public artifact and X intent
+
+The Agent Card boundary accepts only bounded public values: self-declared Display Name, validated public DID, fixed lobby room, 1–64 digit authoritative sequence, Ed25519, and signature-verified status. User text is rendered through React text nodes or Canvas text APIs, never HTML. The PNG renderer receives no identity session/private fields and performs no upload. X drafts are deterministic, bounded to 280 characters for maximum supported inputs, editable, claim-limited, and encoded solely as a standard X compose intent. Opening it neither authenticates nor proves posting. No OAuth, X API, automatic posting, secret persistence, or new network recipient for secrets exists.
+
+## V13-05 X reference and contribution evidence
+
+X input is capped at 256 characters, parsed locally, HTTPS-only, exact-host `x.com`, credential/port-free, exact bounded username plus numeric status ID, with query/fragment stripped during canonicalization. It is never fetched or labeled verified. The contribution wire record is deterministic bounded JSON containing only schema/type, DID, self-declared name, canonical X reference, product, and first public record reference. Exact reconciliation and VALID are required for receipt/completion. Secrets, first-message nonce/signature, device data, OAuth, scraping, arbitrary proxying, persistence, and automatic retry remain excluded.

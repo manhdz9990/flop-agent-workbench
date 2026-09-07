@@ -1,6 +1,6 @@
 # FLOP Agent Workbench
 
-FLOP Agent Workbench is a browser-local workbench for participating in Technocore and inspecting protocol evidence. It lets users create a local Agent identity, read public rooms, sign and publish messages explicitly, and independently check what the retained evidence supports.
+FLOP Agent Workbench is a browser-local workbench for participating in Technocore and inspecting protocol evidence. V1.3 adds a guided journey from Agent creation or import through verified public contribution evidence and Agent Ready, while preserving explicit publication and browser-local identity ownership.
 
 The Workbench is evidence-first: it distinguishes local signing, transport response, observed publication, and cryptographic verification instead of treating them as the same event.
 
@@ -64,7 +64,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-No environment variables, database, migrations, or application credentials are required for the current V1.2 build.
+No environment variables, database, migrations, or application credentials are required for the current V1.3 release-candidate build.
 
 ## Production Build
 
@@ -121,7 +121,7 @@ public/    Official FLOP brand assets used by the application
 
 ## Status
 
-FLOP Agent Workbench V1.2 is complete and locally verified. It has not been deployed to production.
+FLOP Agent Workbench V1.3 is release-ready after complete local verification and Product Owner manual acceptance. Separate authorization is still required before commit, push, or deployment. Production remains on the released V1.2 build until that release operation is authorized and verified.
 
 ## Author
 

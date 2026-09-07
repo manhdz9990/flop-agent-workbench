@@ -3,12 +3,14 @@
 import { useState } from "react";
 
 import { OWNER_SECRET_REVEAL_AUTHORIZATION, type LocalIdentitySession } from "../lib/identity";
+import { createSecretKeyText } from "../lib/identity-portability";
 
 interface MyAgentProps {
   readonly identity?: LocalIdentitySession;
   readonly onBack: () => void;
   readonly onCreate: () => void;
   readonly onImport: () => void;
+  readonly onImportExisting: () => void;
   readonly onBackup: () => void;
   readonly onRooms: () => void;
   readonly onInspectDid: (did: string) => void;
@@ -17,12 +19,13 @@ interface MyAgentProps {
 
 type CopyState = "IDLE" | "COPIED" | "UNAVAILABLE";
 
-export function MyAgent({ identity, onBack, onCreate, onImport, onBackup, onRooms, onInspectDid, onIdentityChange }: MyAgentProps) {
+export function MyAgent({ identity, onBack, onCreate, onImport, onImportExisting, onBackup, onRooms, onInspectDid, onIdentityChange }: MyAgentProps) {
   const [didCopyState, setDidCopyState] = useState<CopyState>("IDLE");
   const [secretCopyState, setSecretCopyState] = useState<CopyState>("IDLE");
   const [confirmReveal, setConfirmReveal] = useState(false);
   const [secretRevealed, setSecretRevealed] = useState(false);
   const [confirmLock, setConfirmLock] = useState(false);
+  const [confirmSecretDownload, setConfirmSecretDownload] = useState(false);
   const active = identity !== undefined && !identity.isLocked;
   const secretKeyHex = active && secretRevealed
     ? identity.revealSecretKeyHex(OWNER_SECRET_REVEAL_AUTHORIZATION)
@@ -51,6 +54,15 @@ export function MyAgent({ identity, onBack, onCreate, onImport, onBackup, onRoom
   function hideSecret(): void {
     setSecretRevealed(false);
     setSecretCopyState("IDLE");
+    setConfirmSecretDownload(false);
+  }
+
+  function downloadSecretKey(): void {
+    if (!active || !secretRevealed) return;
+    const artifact=createSecretKeyText(identity.revealSecretKeyHex(OWNER_SECRET_REVEAL_AUTHORIZATION));
+    const url=URL.createObjectURL(new Blob([artifact.content],{type:"text/plain;charset=utf-8"}));
+    try { const link=document.createElement("a"); link.href=url; link.download=artifact.filename; link.rel="noopener"; link.click(); }
+    finally { URL.revokeObjectURL(url); setConfirmSecretDownload(false); }
   }
 
   function lockAgent(): void {
@@ -73,7 +85,7 @@ export function MyAgent({ identity, onBack, onCreate, onImport, onBackup, onRoom
       <h2 id="no-agent-title">Your Agent is not currently unlocked in this browser.</h2>
       <p>If you already created an Agent, it still belongs to you. Restore the same DID using your Encrypted Backup and Backup Password. There is no server account or automatic persistent login.</p>
       <div className="restore-choice primary-choice"><div><strong>New here?</strong><p>Create a new Agent identity with a new DID.</p></div><button className="primary" type="button" onClick={onCreate}>Create New Agent</button></div>
-      <p className="returning-agent-prompt">Already have an Agent? <button className="text-action" type="button" onClick={onImport}>Restore Agent</button></p>
+      <div className="existing-agent-actions"><p>Already have an Agent?</p><button className="text-action" type="button" onClick={onImport}>Restore Workbench Agent</button><button className="text-action" type="button" onClick={onImportExisting}>Import Existing Agent</button></div>
     </section> : <>
       <p className="session-state">● Active only in this browser session</p>
       <section className="agent-identity-summary" aria-labelledby="public-identity-title">
@@ -105,7 +117,7 @@ export function MyAgent({ identity, onBack, onCreate, onImport, onBackup, onRoom
           <div className="eyebrow">Secret</div><h2 id="secret-key-title">Secret Key</h2>
           <p>This is the raw 32-byte Ed25519 seed shown as 64 lowercase hexadecimal characters. Anyone who gets it can control this agent identity.</p>
           <code className={`agent-secret-value break-anywhere${secretRevealed ? " revealed" : ""}`} aria-label={secretRevealed ? "Revealed Secret Key" : "Masked Secret Key"}>{secretKeyHex ?? "••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••"}</code>
-          {!secretRevealed ? <button className="danger-action" type="button" onClick={() => setConfirmReveal(true)}>Reveal Secret Key</button> : <div className="agent-actions"><button className="secondary" type="button" onClick={hideSecret}>Hide Secret Key</button><button className="danger-action" type="button" onClick={() => void copySecretKey()}>Copy Secret Key</button></div>}
+          {!secretRevealed ? <button className="danger-action" type="button" onClick={() => setConfirmReveal(true)}>Reveal Secret Key</button> : <><div className="agent-actions"><button className="secondary" type="button" onClick={hideSecret}>Hide Secret Key</button><button className="danger-action" type="button" onClick={() => void copySecretKey()}>Copy Secret Key</button><button className="danger-action" type="button" onClick={() => setConfirmSecretDownload(true)}>Download Secret Key (.txt)</button></div><p className="warning">Plain-text Secret Key. Keep private.</p></>}
           {secretCopyState === "COPIED" && <p className="warning" role="status">Secret Key copied. Clear your clipboard after using it.</p>}
           {secretCopyState === "UNAVAILABLE" && <p className="warning" role="status">Clipboard access was unavailable. Do not paste this key into an untrusted app or website.</p>}
         </div>
@@ -123,6 +135,7 @@ export function MyAgent({ identity, onBack, onCreate, onImport, onBackup, onRoom
       <section className="agent-session" aria-labelledby="lock-agent-title"><div><div className="eyebrow">Session</div><h2 id="lock-agent-title">Lock this browser session</h2><p>Locking clears the active Secret Key from the Workbench&apos;s in-memory holder. It does not delete downloaded encrypted backups.</p></div><button className="secondary danger-action" type="button" onClick={() => setConfirmLock(true)}>Lock Agent</button></section>
 
       {confirmReveal && <div className="publish-confirm" role="dialog" aria-modal="true" aria-labelledby="confirm-reveal-title"><div><h3 id="confirm-reveal-title">Reveal your Secret Key?</h3><p>This key gives complete control of your agent identity.</p><ul><li>Do not paste it into X, Discord, Telegram, email, forms, or websites.</li><li>Do not share it in screenshots or support messages.</li><li>Prefer the encrypted backup for recovery and portability.</li></ul><div className="confirm-actions"><button className="secondary" type="button" onClick={() => setConfirmReveal(false)}>Cancel</button><button className="danger-action" type="button" onClick={() => { setConfirmReveal(false); setSecretRevealed(true); }}>I understand · Reveal</button></div></div></div>}
+      {confirmSecretDownload && <div className="publish-confirm" role="dialog" aria-modal="true" aria-labelledby="confirm-secret-download-title"><div><h3 id="confirm-secret-download-title">Download a plain-text Secret Key?</h3><p>Anyone with this Secret Key can sign as this Agent.</p><ul><li>Never share it publicly or post it to X, Discord, or Telegram.</li><li>Never upload it to untrusted websites or commit it to GitHub.</li><li>Never include it in screenshots.</li></ul><div className="confirm-actions"><button className="secondary" type="button" onClick={() => setConfirmSecretDownload(false)}>Cancel</button><button className="danger-action" type="button" onClick={downloadSecretKey}>Download Secret Key (.txt)</button></div></div></div>}
       {confirmLock && <div className="publish-confirm" role="dialog" aria-modal="true" aria-labelledby="confirm-lock-title"><div><h3 id="confirm-lock-title">Lock this Agent?</h3><p>This removes the unlocked identity from the current browser session.</p><strong>Downloaded encrypted backups are not deleted.</strong><div className="confirm-actions"><button className="danger-action" type="button" onClick={lockAgent}>Lock Agent</button><button className="secondary" type="button" onClick={() => setConfirmLock(false)}>Cancel</button></div></div></div>}
     </>}
   </section>;

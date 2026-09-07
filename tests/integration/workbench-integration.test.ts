@@ -72,7 +72,7 @@ describe("V12-09R Workbench integration boundaries", () => {
     expect(page).toContain('<button className="text-action" type="button" onClick={() => props.onOnboard("IMPORT")}>Restore Agent</button>');
     expect(page).toContain('{identity && <div className="home-status-grid">');
     expect(page).toContain('<div className="identity-context status-only"><span>No Agent loaded</span></div>');
-    expect(page).toContain('props.onOnboard("CREATE")');
+    expect(page).toContain('run: props.onJourney');
     expect(page).toContain('props.onOnboard("IMPORT")');
     expect(page).toContain('resource("docs", "Docs", FLOP_DOCS_URL)');
     expect(page).not.toMatch(/discord\.com|github\.com|airdrop|token price|follower count/i);

@@ -30,6 +30,13 @@ async function derivePublicIdentity(seed: Uint8Array): Promise<PublicIdentity> {
   });
 }
 
+export async function importRawSeedIdentity(seed: Uint8Array): Promise<LocalIdentitySession> {
+  if (seed.length !== 32) throw new IdentityBackupError("INVALID_BACKUP_SEED", "Identity seed length is invalid.");
+  const copy = seed.slice();
+  try { return new SessionIdentity(copy, await derivePublicIdentity(copy), "NOT_VERIFIED"); }
+  finally { copy.fill(0); }
+}
+
 class SessionIdentity implements LocalIdentitySession {
   readonly publicIdentity: PublicIdentity;
   readonly backupVerificationStatus: BackupVerificationStatus;
