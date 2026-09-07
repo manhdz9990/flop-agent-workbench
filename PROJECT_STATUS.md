@@ -4,13 +4,23 @@
 FLOP Agent Workbench V1.2; includes the completed Technocore Protocol Debugger V1.1.
 
 ## Lifecycle stage
-V1.2 IDENTITY UX RELEASE AUTHORIZED. The Identity Ownership, Backup/Recovery, Restore Agent, and consolidated Agent lifecycle UX update is COMPLETE / PRODUCT OWNER PASS / FINAL LOCAL GATE PASS. Release commit, push, deployment, and production verification are the active authorized actions; production remains unchanged until those actions succeed.
+V1.2 IDENTITY UX UPDATE RELEASED. The Identity Ownership, Backup/Recovery, Restore Agent, and consolidated Agent lifecycle UX update is COMPLETE / PRODUCT OWNER PASS / RELEASED / PRODUCTION READ-ONLY VERIFICATION PASS.
 
 ## Coding agent
 VS Code + Codex.
 
 ## Current phase
-V1.2 IDENTITY OWNERSHIP, BEGINNER UX & EXISTING AGENT RESTORE UPDATE: COMPLETE / PRODUCT OWNER PASS / RELEASE AUTHORIZED. Final release gates passed from the approved working tree: typecheck PASS; 27/27 unit/integration files and 334/334 tests PASS; ESLint PASS with zero warnings; production build PASS; Chromium E2E 21/21 PASS; offline npm audit PASS with 0 vulnerabilities. Automated live Technocore writes: NO. The previous production release remains at `https://flop-agent-workbench.vercel.app` until the authorized release workflow completes.
+V1.2 IDENTITY OWNERSHIP, BEGINNER UX & EXISTING AGENT RESTORE UPDATE: COMPLETE / PRODUCT OWNER PASS / RELEASED. Release commit `89e08d5c0163d1362d110ad1085a599bb55cd89e` is on `origin/main` and was deployed through the existing `manh100k/flop-agent-workbench` Vercel project. Canonical production URL: `https://flop-agent-workbench.vercel.app`.
+
+### Identity UX production release — 2026-09-07
+
+**Status: RELEASED / PRODUCTION READ-ONLY VERIFICATION PASS.** The complete working-tree diff from production baseline `eee4c015ee758301381841ef9636f595a0a835fb` was audited as the bounded approved Identity Ownership, Backup/Recovery, Restore Agent, same-DID recovery, Create-primary/Restore-secondary, responsive/accessibility, test, and documentation update. Ed25519 generation, DID derivation, canonical payload, nonce and publish semantics, read-back reconciliation, Live Rooms engine, Evidence semantics, backend architecture, API routes, Technocore endpoint architecture, backup V1 schema, dependencies, and Vercel configuration remain unchanged.
+
+Final release gates: typecheck PASS; 27/27 unit/integration files and 334/334 tests PASS; ESLint PASS with zero warnings; production build PASS; Chromium E2E 21/21 PASS; offline npm audit PASS with 0 vulnerabilities. Repository secret/artifact scan found no credential, private key, seed, mnemonic, Backup Password, Agent backup, or other secret-bearing tracked artifact. Secret Key remains masked by default and available only through deliberate owner-confirmed reveal; raw secret and Backup Password remain outside server, Technocore, URL, log, SSR, storage, cookie, diagnostic, receipt, and Evidence boundaries. Lock removes the active in-memory capability; restore remains local and backup V1 compatibility remains covered.
+
+Vercel production deployment `dpl_5DY7dQjJaK46KGyHDCu7ovnMHyQx` is READY. Its build log proves GitHub repository `manhdz9990/flop-agent-workbench`, branch `main`, commit `89e08d5`, and a successful Next.js 16.3.4 production build. Existing aliases were preserved, including canonical `https://flop-agent-workbench.vercel.app`.
+
+Read-only Chromium production verification PASS at 1440×900 and 390×844: unloaded Home exposes Create New Agent as the sole filled identity-entry primary and Restore Agent as secondary; My Agent and Restore entry render; an ephemeral browser-local test identity keeps Secret Key masked and Copy unavailable before reveal; Public Rooms discovery and retained-room reads succeed; two serialized room-read responses were observed per viewport; page-level horizontal overflow, unexpected network destinations, console/page errors, and detected write requests were all zero. The official FLOP favicon asset returned HTTP 200. No private Product Owner backup was uploaded, no production Secret Key was revealed or copied, and automated live Technocore writes were not performed.
 
 ### Existing Agent Restore UX follow-up — 2026-09-07
 
