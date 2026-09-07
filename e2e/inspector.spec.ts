@@ -24,15 +24,24 @@ test("first-time Home presents the single-shell real-state dashboard", async ({ 
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Home");
   await expect(page.locator(".sidebar-brand img")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Create Agent →" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create New Agent", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: /Docs/ })).toHaveAttribute("href", "https://flop.finance/teaser/");
-  await expect(page.getByRole("button", { name: /Import backup/ })).toBeVisible();
-  for (const name of ["Create your Agent", "Identity", "Backup", "First Record", "Public Rooms", "Evidence", "Developer Tools"]) await expect(page.getByRole("heading", { name })).toBeVisible();
-  await expect(page.getByText("Not created", { exact: true })).toBeVisible();
-  await expect(page.getByText("Locked", { exact: true })).toHaveCount(2);
+  await expect(page.getByRole("button", { name: /Restore Agent/ }).first()).toBeVisible();
+  await expect(page.locator("button.primary:visible")).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Restore Agent", exact: true })).toHaveClass(/text-action/);
+  for (const name of ["Create your Agent", "Public Rooms", "Developer Tools"]) await expect(page.getByRole("heading", { name })).toBeVisible();
+  for (const name of ["Identity", "Backup", "First Record", "Evidence"]) await expect(page.getByRole("heading", { name, exact: true })).toHaveCount(0);
+  await expect(page.getByText("No Agent loaded", { exact: true })).toBeVisible();
   await expect(page.getByText("Browse public conversations and choose a room.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Rooms →" })).toBeVisible();
   await page.screenshot({ path: "artifacts/v12-10-preflight/r4a-desktop-home.png", fullPage: true });
+  for (const viewport of [{ width: 900, height: 760 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    await expect(page.getByRole("button", { name: "Create New Agent", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Restore Agent", exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(await page.evaluate(() => document.documentElement.clientWidth));
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
   expect(inspectRequests).toHaveLength(0);
   expect(discoveryRequests).toHaveLength(0);
   await page.getByRole("button", { name: "Open Rooms →" }).click();
@@ -274,6 +283,8 @@ test("newcomer journey gates backup, signing, explicit publish, read-back verifi
   let observedWrite: { room: string; did: string; sig: string; nonce: string; text: string } | undefined;
   let writeCount = 0;
   let readCount = 0;
+  const requestData: string[] = [];
+  page.on("request", (request) => requestData.push(`${request.url()} ${request.postData() ?? ""}`));
   await page.route("https://technocore.chat/r/lobby/say-signed/**", async (route) => {
     writeCount += 1;
     const parts = new URL(route.request().url()).pathname.split("/").map(decodeURIComponent);
@@ -291,20 +302,21 @@ test("newcomer journey gates backup, signing, explicit publish, read-back verifi
     } });
   });
 
-  await page.goto("/"); await page.getByRole("button", { name: "Create Agent →" }).click();
+  await page.goto("/"); await page.getByRole("button", { name: "Create New Agent", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Create your agent identity" }).first()).toBeVisible();
   await expect(page.getByLabel("Onboarding progress")).toBeVisible();
   await expect(page.getByLabel("Onboarding progress").getByRole("button").nth(2)).toBeDisabled();
 
-  await page.getByRole("button", { name: "Create identity" }).click();
-  await expect(page.getByText("Active agent")).toBeVisible();
+  await page.getByRole("button", { name: "Create New Agent", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Open My Agent" })).toBeVisible();
   await expect(page.locator(".identity-context")).not.toContainText(/wallet|account|login|seed|private/i);
   await expect(page.locator('input[name*="seed" i], input[name*="private" i], textarea[name*="seed" i], textarea[name*="private" i]')).toHaveCount(0);
   expect(await page.locator("[data-seed], [data-private-key]").count()).toBe(0);
   await page.getByRole("button", { name: "View full DID" }).click();
   const activeDid = await page.locator(".public-did strong").textContent();
-  await page.locator(".identity-context").click();
-  await expect(page.getByRole("heading", { name: "Inspect a DID / Key" })).toBeVisible();
+  await page.getByRole("button", { name: "Open My Agent" }).click();
+  await expect(page.getByRole("heading", { name: "My Agent", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Inspect DID →" }).click();
   await expect(page.getByLabel("Ed25519 did:key identifier")).toHaveValue(activeDid!);
   await page.locator(".sidebar-brand").click();
   await expect(page.getByRole("heading", { name: "Secure your backup" })).toBeVisible();
@@ -312,22 +324,28 @@ test("newcomer journey gates backup, signing, explicit publish, read-back verifi
   await expect(page.getByRole("heading", { name: "Backup" }).locator("xpath=ancestor::article")).toContainText("Required");
   await expect(page.getByRole("heading", { name: "First Record" }).locator("xpath=ancestor::article")).toContainText("Needs backup");
   await page.getByRole("button", { name: "Secure Backup →" }).click();
-  await page.getByLabel("Backup passphrase").first().fill(passphrase);
-  const downloadEvent = page.waitForEvent("download");
+  await page.getByLabel("Backup Password").first().fill(passphrase);
   await page.getByRole("button", { name: "Create encrypted backup" }).click();
+  await page.getByRole("button", { name: "Download encrypted backup ↓" }).click();
+  await expect(page.getByRole("dialog")).toContainText("encrypted as");
+  const downloadEvent = page.waitForEvent("download");
+  await page.getByRole("dialog").getByRole("button", { name: "Download Backup" }).click();
   const backupDownload = await downloadEvent;
   const backupPath = await backupDownload.path();
   expect(backupPath).not.toBeNull();
+  await expect(page.getByText("Backup downloaded")).toBeVisible();
   await expect(page.getByLabel("Onboarding progress").getByRole("button").nth(2)).toBeDisabled();
 
-  await page.getByLabel("Encrypted identity backup").setInputFiles(backupPath!);
-  await page.getByLabel("Passphrase").fill("wrong passphrase");
-  await page.getByRole("button", { name: "Verify backup" }).click();
+  await page.getByLabel("Encrypted Backup").setInputFiles(backupPath!);
+  await page.getByLabel("Backup Password").fill("wrong passphrase");
+  await page.getByRole("button", { name: "Verify My Backup" }).click();
   await expect(page.locator(".operational-error")).toContainText("decrypt");
-  await page.getByLabel("Passphrase").fill(passphrase);
-  await page.getByRole("button", { name: "Verify backup" }).click();
+  await page.getByLabel("Backup Password").fill(passphrase);
+  await page.getByRole("button", { name: "Verify My Backup" }).click();
   await expect(page.getByText("✓ Backup verified")).toBeVisible();
-  await page.getByRole("button", { name: /Continue to your first message/ }).click();
+  await expect(page.getByRole("button", { name: "Open Technocore Rooms →" })).toBeVisible();
+  await expect(page.locator(".macro-stage-content button.primary:visible")).toHaveCount(1);
+  await page.getByRole("button", { name: /Continue guided first message/ }).click();
 
   const hostile = "Hello <script>window.__onboardOwned=true</script> https://example.invalid";
   await page.getByRole("textbox", { name: "Message", exact: true }).fill(`  ${hostile}  `);
@@ -378,7 +396,8 @@ test("newcomer journey gates backup, signing, explicit publish, read-back verifi
   await page.locator(".sidebar-brand").click();
   await expect(page.getByRole("heading", { name: "First Record" })).toBeVisible();
   await expect(page.getByRole("button", { name: "View Evidence →" }).first()).toBeVisible();
-  await expect(page.getByText("Verified", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("Verified", { exact: true })).toHaveCount(1);
+  await expect(page.getByText("Observed", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Rooms", exact: true }).first().click();
   await page.getByRole("button", { name: "Load rooms" }).click();
   await page.locator(".room-choice").filter({ hasText: "# lobby" }).click();
@@ -424,10 +443,27 @@ test("newcomer journey gates backup, signing, explicit publish, read-back verifi
   await page.getByRole("button", { name: "Lock Agent" }).click();
   await expect(page.getByRole("dialog")).toContainText("Downloaded encrypted backups are not deleted.");
   await page.getByRole("dialog").getByRole("button", { name: "Lock Agent" }).click();
-  await expect(page.getByRole("heading", { name: "No agent identity is active in this browser session." })).toBeVisible();
-  await expect(page.getByText("No active agent")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your Agent is not currently unlocked in this browser." })).toBeVisible();
+  await expect(page.getByText("No Agent loaded").first()).toBeVisible();
+  await page.getByRole("button", { name: "Restore Agent", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Restore Agent", exact: true })).toBeVisible();
+  await page.getByLabel("Encrypted Backup").setInputFiles(backupPath!);
+  await page.getByLabel("Backup Password").fill(passphrase);
+  await page.getByRole("button", { name: "Restore Agent", exact: true }).click();
+  await expect(page.getByText("AGENT RESTORED ✓")).toBeVisible();
+  await expect(page.getByText("Your original Agent identity is now active.")).toBeVisible();
+  await page.getByRole("button", { name: "View full DID" }).click();
+  await expect(page.locator(".public-did strong")).toHaveText(activeDid!);
+  await expect(page.getByText("✓ Ready to sign", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Open Technocore Rooms →" })).toBeVisible();
+  expect(requestData.join("\n")).not.toContain(passphrase);
+  expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length, cookies: document.cookie }))).toEqual({ local: 0, session: 0, cookies: "" });
+  await page.getByRole("button", { name: "My Agent", exact: true }).click();
+  await page.getByRole("button", { name: "Lock Agent" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Lock Agent" }).click();
   await page.reload();
   await expect(page.getByRole("heading", { name: "Home" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Restore Agent", exact: true })).toBeVisible();
   expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length }))).toEqual({ local: 0, session: 0 });
 });
 
@@ -435,13 +471,13 @@ test("first-time entries reuse onboarding and active-DID Home remains available"
   const external: string[] = [];
   page.on("request", (request) => { if (request.url().includes("technocore.chat")) external.push(request.url()); });
   await page.goto("/");
-  await page.getByRole("button", { name: /Import backup/ }).click();
-  await expect(page.getByRole("heading", { name: "Import your identity" }).first()).toBeVisible();
-  await expect(page.getByRole("button", { name: "Import and verify" })).toBeDisabled();
+  await page.getByRole("button", { name: /Restore Agent/ }).first().click();
+  await expect(page.getByRole("heading", { name: "Restore Agent", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Restore Agent", exact: true })).toBeDisabled();
   await expect(page.getByLabel("Onboarding progress").getByRole("button").nth(2)).toBeDisabled();
   await page.getByRole("button", { name: "Home", exact: true }).click();
-  await page.getByRole("button", { name: "Create Agent →" }).click();
-  await page.getByRole("button", { name: "Create identity" }).click();
+  await page.getByRole("button", { name: "Create New Agent", exact: true }).click();
+  await page.getByRole("button", { name: "Create New Agent", exact: true }).click();
   await expect(page.locator(".identity-context")).toBeVisible();
   await page.locator(".sidebar-brand").click();
   await expect(page.getByRole("heading", { name: "Home" })).toBeVisible();
@@ -462,7 +498,7 @@ test("first-time entries reuse onboarding and active-DID Home remains available"
   expect(await page.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth)).toBe(true);
   await page.reload();
   await expect(page.getByRole("heading", { name: "Home" })).toBeVisible();
-  await expect(page.getByText("No active agent")).toBeVisible();
+  await expect(page.getByText("No Agent loaded").first()).toBeVisible();
   expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length }))).toEqual({ local: 0, session: 0 });
   expect(external).toEqual([]);
 });
@@ -485,10 +521,10 @@ test("R4 composer gates reuse existing Agent creation and backup stages", async 
   await page.screenshot({ path: "artifacts/v12-10-preflight/r4-mobile-no-agent.png" });
 
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.getByRole("button", { name: "Create or Import Agent →" }).click();
+  await page.getByRole("button", { name: "Create or Restore Agent →" }).click();
   await expect(page.getByRole("heading", { name: "Create your agent identity", level: 1 })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Import an existing backup →" })).toBeVisible();
-  await page.getByRole("button", { name: "Create identity" }).click();
+  await expect(page.getByRole("button", { name: "Restore Agent instead →" })).toBeVisible();
+  await page.getByRole("button", { name: "Create New Agent", exact: true }).click();
   await page.getByRole("button", { name: "Rooms", exact: true }).click();
   await page.getByRole("button", { name: "Open lobby →" }).click();
   await composer.scrollIntoViewIfNeeded();
@@ -510,8 +546,8 @@ test("Rooms / Chat reads retained public conversation inertly and keeps publishi
   await page.route("**/api/rooms", (route) => route.fulfill({ json: { ok: true, value: { observations: [{ room: "garden", seq: "13", approxStoredSize: "1K", lastActivity: "now" }, { room: "lobby", seq: "12", approxStoredSize: "2K", lastActivity: "now", topic: hostile }] } } }));
   await page.route("**/api/inspect", (route) => { roomReads += 1; return route.fulfill({ json: liveResolution("ROOM", [{ from: "alice", text: hostile, seq: "11" }, fixture.record]) }); });
   await page.goto("/");
-  await page.getByRole("button", { name: "Create Agent →" }).click();
-  await page.getByRole("button", { name: "Create identity" }).click();
+  await page.getByRole("button", { name: "Create New Agent", exact: true }).click();
+  await page.getByRole("button", { name: "Create New Agent", exact: true }).click();
   await page.getByRole("button", { name: "Rooms", exact: true }).click();
   await expect(page.getByText(/follow its live retained stream/)).toBeVisible();
   await page.getByRole("button", { name: "Load rooms" }).click();

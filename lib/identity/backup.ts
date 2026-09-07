@@ -139,7 +139,7 @@ export async function encryptSeedBackup(seed: Uint8Array, did: string, passphras
       cipher: { name: "AES-GCM", keyLength: 256, iv: base64urlnopad.encode(iv) },
       ciphertext: base64urlnopad.encode(encrypted),
     };
-    return JSON.stringify(envelope);
+    return JSON.stringify(envelope, null, 2);
   } finally {
     plaintext.fill(0);
   }

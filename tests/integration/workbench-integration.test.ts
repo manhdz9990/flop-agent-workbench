@@ -8,12 +8,12 @@ const api = ["inspect", "rooms"].map((name) => readFileSync(new URL(`../../app/a
 
 describe("V12-09R Workbench integration boundaries", () => {
   it("exposes the compact Home and existing inspection information architecture", () => {
-    for (const label of ["Create Agent", "Import backup", "Rooms", "My Agent", "Evidence", "Public Rooms", "Open Rooms", "Debug a message", "Analyze an export", "Inspect a DID / key"]) expect(page).toContain(label);
+    for (const label of ["Restore Agent", "Create New Agent", "Rooms", "My Agent", "Evidence", "Public Rooms", "Open Rooms", "Debug a message", "Analyze an export", "Inspect a DID / key"]) expect(page).toContain(label);
     expect(page).toContain('id="inspect-debug-title">Developer Tools');
   });
 
   it("derives the same Home structure from real readiness and runtime Evidence only", () => {
-    for (const copy of ["Next Action", "Identity", "Backup", "First Record", "Public Rooms", "Developer Tools", "Ready", "Required", "Not created", "Verified"]) expect(page).toContain(copy);
+    for (const copy of ["Next Action", "Identity", "Backup", "First Record", "Public Rooms", "Developer Tools", "Ready", "Required", "Not loaded", "Verified"]) expect(page).toContain(copy);
     expect(page).toContain('identity?.backupVerificationStatus === "VERIFIED"');
     expect(page).toContain('entry.source === "READBACK_VERIFIED"');
     expect(page).toContain('entry.observationState === "PUBLISHED_AND_VERIFIED"');
@@ -21,9 +21,9 @@ describe("V12-09R Workbench integration boundaries", () => {
     expect(home).not.toMatch(/activity score|contribution|reputation score|trust score|rewards|eligibility/i);
     expect(home.match(/home-primary-grid/g)).toHaveLength(1);
     expect(home.match(/home-status-grid/g)).toHaveLength(1);
-    for (const nextAction of ["Create your Agent", "Secure your backup", "Publish your first verified record", "Review verified evidence"]) expect(home).toContain(nextAction);
-    expect(home).toContain('label: "Open Rooms →", run: props.onRooms');
-    expect(home).toContain('label: "View Evidence →", run: props.onEvidence');
+    for (const nextAction of ["Create your Agent", "Secure your backup", "Agent ready", "Open Technocore Rooms"]) expect(home).toContain(nextAction);
+    expect(home).toContain('label: "Open Technocore Rooms →", run: props.onRooms');
+    expect(home).toContain('verified ? "View Evidence →"');
   });
 
   it("keeps one resumable onboarding orchestrator and reuses debugger inputs", () => {
@@ -37,7 +37,8 @@ describe("V12-09R Workbench integration boundaries", () => {
   });
 
   it("holds only compact public agent context without account or wallet semantics", () => {
-    expect(page).toContain("Active agent");
+    expect(page).toContain('aria-label="Open My Agent"');
+    expect(page).toContain('onClick={onAgent}');
     expect(page).toContain("identity.publicIdentity.did");
     expect(page).not.toMatch(/Active (?:account|wallet|login)/i);
     expect(page).not.toMatch(/identity\.(?:seed|privateKey|passphrase)/);
@@ -66,7 +67,11 @@ describe("V12-09R Workbench integration boundaries", () => {
   });
 
   it("implements no-DID Home as a deterministic dashboard", () => {
-    for (const copy of ["Start, read public rooms, or inspect evidence.", "Create your Agent", "Not created", "Locked", "Needs Agent", "Empty", "Browse public conversations and choose a room.", "Open Rooms →"]) expect(page).toContain(copy);
+    for (const copy of ["Start, read public rooms, or inspect evidence.", "Create your Agent", "Create New Agent", "Already have an Agent?", "Restore Agent", "Not loaded", "Locked", "Needs Agent", "Empty", "Browse public conversations and choose a room.", "Open Rooms →"]) expect(page).toContain(copy);
+    expect(page).toContain('<button className="primary" type="button" onClick={next.run}>{next.label}</button>');
+    expect(page).toContain('<button className="text-action" type="button" onClick={() => props.onOnboard("IMPORT")}>Restore Agent</button>');
+    expect(page).toContain('{identity && <div className="home-status-grid">');
+    expect(page).toContain('<div className="identity-context status-only"><span>No Agent loaded</span></div>');
     expect(page).toContain('props.onOnboard("CREATE")');
     expect(page).toContain('props.onOnboard("IMPORT")');
     expect(page).toContain('resource("docs", "Docs", FLOP_DOCS_URL)');

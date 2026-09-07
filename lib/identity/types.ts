@@ -1,5 +1,6 @@
 export const AGENT_BACKUP_FORMAT = "technocore-agent-backup/v1" as const;
 export const BACKUP_KDF_ITERATIONS = 600_000 as const;
+export const OWNER_SECRET_REVEAL_AUTHORIZATION = "OWNER_CONFIRMED_ADVANCED_REVEAL" as const;
 
 export interface PublicIdentity {
   readonly did: string;
@@ -29,6 +30,7 @@ export interface LocalIdentitySession {
   readonly publicIdentity: PublicIdentity;
   readonly backupVerificationStatus: BackupVerificationStatus;
   readonly isLocked: boolean;
+  revealSecretKeyHex(authorization: typeof OWNER_SECRET_REVEAL_AUTHORIZATION): string;
   createEncryptedBackup(passphrase: string): Promise<string>;
   prepareSignedMessage(
     input: PrepareSignedMessageInput,
@@ -41,6 +43,7 @@ export interface LocalIdentitySession {
 export type IdentityBackupErrorCode =
   | "CRYPTO_UNAVAILABLE"
   | "IDENTITY_LOCKED"
+  | "SECRET_REVEAL_NOT_AUTHORIZED"
   | "INVALID_PASSPHRASE"
   | "INVALID_BACKUP"
   | "UNSUPPORTED_BACKUP_VERSION"

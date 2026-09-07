@@ -54,4 +54,9 @@ Purpose: show locally/session-observed signed activity, verification status, roo
 Purpose: audit V12-08A/B/C together before visual redesign, covering identity/backup boundaries, signing and nonce behavior, explicit publish and read-back semantics, evidence verdicts, hostile content, persistence absence, unintended writes, server-relay absence, and V1.1/V1.2 regression safety.
 
 ### Remaining sequence
+
 V12-09 UI/UX Polish → V12-10 Final Regression & Release Preflight → Final Release Review → deployment only after explicit product-owner authorization. Each phase requires separate authorization and stops at its own completion gate.
+
+## V1.2 identity ownership and beginner UX amendment — 2026-09-07
+
+Bounded scope: clarify Public DID, Secret Key, signing, recovery, proof limits, and portability; add an explicitly confirmed and masked-by-default browser-only Advanced Secret Key reveal/copy path; preserve Encrypted Backup as the recommended path; pretty-print the unchanged V1 backup envelope; and retain all existing signing, nonce, Rooms, backend, verification, and publish behavior. Completion requires identity/security tests, the full repository gate, documentation reconciliation, Product Owner manual review, and no deployment.

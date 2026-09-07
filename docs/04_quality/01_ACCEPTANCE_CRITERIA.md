@@ -75,7 +75,7 @@ These requirements defined the V12-03 implementation gate and were not marked PA
 ## V12-05 guided newcomer onboarding amendment
 
 59. Start exposes an obvious guided onboarding path while preserving every existing debugger entry point.
-60. Identity creation uses V12-01, renders only public identity, and creates no raw seed/private-key field or persistent identity store.
+60. Identity creation uses V12-01 and renders only public identity in the normal flow. It creates no ordinary raw seed/private-key field or persistent identity store; the sole output exception is the authorized, confirmed My Agent Advanced Secret Key reveal.
 61. Encrypted-backup creation/download does not enable signing. Only successful local import/decrypt of the matching identity with `VERIFIED` state does.
 62. Wrong-passphrase, tampered, invalid-schema, and DID-mismatch imports fail closed without enabling signing.
 63. Introduction defaults to room `lobby`; exact room, DID, nonce, post-sweep text, and canonical payload are inspectable before signing.
@@ -91,7 +91,7 @@ These requirements defined the V12-03 implementation gate and were not marked PA
 
 71. Home visibly separates Get Started and Inspect & Debug while exposing the three onboarding and four debugger entries without hiding either workflow.
 72. All onboarding shortcuts host the single V12-05 flow and cannot bypass verified-backup, explicit-signing, explicit-publish, or attempted-state/read-back gates.
-73. An unlocked active identity is retained only in page-runtime memory and displays only shortened/full public DID—not account, login, wallet, profile, or secret data.
+73. An unlocked active identity is retained only in page-runtime memory. Normal identity UI displays public identity only. Secret signing material may appear only through the explicitly authorized Advanced Secret Key reveal flow—not as account, login, wallet, profile, or ordinary identity data.
 74. Active identity navigation reuses the existing DID inspector; verified onboarding room/sequence navigation reuses existing Message Debug without an automatic read.
 75. Existing public-room discovery remains fixed-origin and bounded; existing diagnostics, Evidence Receipt terminology, verdict/status taxonomy, and tclk observation-only behavior remain accessible.
 76. Navigation causes no signed write construction/request, background polling, content-derived fetch, or hostile-content execution.
@@ -100,7 +100,7 @@ These requirements defined the V12-03 implementation gate and were not marked PA
 
 ## V12-07 security and regression hardening amendment
 
-79. Secrets remain excluded from rendered output, URLs, server routes, logs, receipts, persistence, and public serializable models; passphrase UI values clear after local operations.
+79. Secrets remain excluded from ordinary rendered output, server output, logs, URLs, persistence, diagnostics, receipts, network requests, and public serializable models; passphrase UI values clear after local operations. Deliberate client-only rendering inside the authorized Advanced Secret Key reveal flow is the sole exception.
 80. Backup input is bounded and exact-shape/version/KDF/cipher/encoding validation rejects manipulated metadata before PBKDF2.
 81. Exact nonce arithmetic, reservation-before-signing, burn-before-fetch, no same-descriptor retry, and fixed one-time encoded GET destination remain unchanged.
 82. V12-03 ambiguity and V12-04 exact-match/VALID-only success preserve their approved meanings; HTTP and operational errors cannot fabricate verification.
@@ -161,3 +161,17 @@ The following are phase-definition constraints, not completed acceptance claims:
 108. Backup crypto, canonical payload/signature behavior, explicit-only fixed-origin publishing, ambiguity, exact read-back qualification, evidence verdicts, 12-stage diagnostics, receipts, and tclk semantics remain unchanged.
 109. Secret/persistence, hostile-content, public-room, API/read-only server, resource-limit, product-claim, logging, and automatic-network audits pass with zero automated live Technocore writes.
 110. The full V12-08C through V12-01 and V1.1 regression gate passes before V12-09.
+
+## Existing Agent restore UX amendment
+
+- An unloaded browser session says **Agent not loaded**, not that no identity exists. **Create New Agent** is the sole filled primary CTA; **Already have an Agent? Restore Agent** follows as a keyboard-accessible text action.
+- Restore Agent reuses the existing bounded V1 importer, local authenticated decryption, seed validation, public-key/DID derivation, envelope DID match, and single runtime holder.
+- A successful restore identifies **AGENT RESTORED**, shows the recovered Public DID, confirms local decryption, DID match, and signing readiness, and offers **Open Technocore Rooms** without implying a new identity was created.
+- Create New Agent states that it creates a new DID and directs existing owners toward Restore Agent before generation.
+- Wrong Backup Password, malformed V1 envelope, and DID mismatch fail safely. Backup Password and secret material reach neither server/network requests nor browser persistence.
+- Lock and refresh continue clearing the unlocked runtime identity. The unloaded/locked UI retains an obvious Restore Agent path without weakening zeroization or adding persistent login.
+- Backup V1, signing, nonce, publishing, read-back, Evidence, Live Rooms, APIs, dependencies, and production architecture remain unchanged.
+- Unloaded Home hides Agent-dependent Identity/Backup/First Record/Evidence progress cards; Public Rooms and Developer Tools remain available and visually subordinate to Create New Agent.
+- The unloaded header shows only **No Agent loaded**. The active header shows only the shortened Public DID, has accessible purpose **Open My Agent**, and navigates to My Agent rather than DID Inspector.
+- Active Home does not show Create/Restore entry actions. Before backup verification its dominant action is backup protection; when Ready to Sign its dominant action is **Open Technocore Rooms** and status cards use beginner-facing Ready/Verified/Not published/Observed/Available terminology.
+- After backup verification, **Open Technocore Rooms** is the dominant action; the existing guided-first-message route remains a subordinate text action. Restore success retains the same Rooms continuation.

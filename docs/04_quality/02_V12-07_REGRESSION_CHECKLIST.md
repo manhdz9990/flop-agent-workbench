@@ -2,7 +2,7 @@
 
 | Boundary | Result | Evidence |
 |---|---|---|
-| Secret exfiltration/persistence/logging | PASS | No secret getter/render/server route/storage API/log call; encrypted backup only; passphrase inputs clear after operations. |
+| Secret exfiltration/persistence/logging | PASS | No ordinary secret getter/render, server route, storage API, or log call; encrypted backup remains primary; passphrase inputs clear after operations. Per the later ADR 001 amendment, the confirmed client-only My Agent Advanced reveal is the sole rendering exception. |
 | Backup schema/resource/KDF abuse | PASS | 16 KiB input bound, exact keys/metadata/encodings, fixed PBKDF2/AES-GCM, hostile variants rejected before deriveKey. |
 | Nonce/signing concurrency | PASS | Exact BigInt tests, DID+room reservations, reservation before async sign, operation mutex and revision invalidation. |
 | Publish destination/burn/ambiguity | PASS | Fixed exact GET tests, one-time component encoding, burn-before-fetch, zero retry, RESPONSE_RECEIVED/OUTCOME_UNKNOWN only. |

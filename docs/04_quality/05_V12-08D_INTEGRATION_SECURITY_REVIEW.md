@@ -6,7 +6,7 @@ Verified 2026-09-05.
 |---|---|---|
 | Identity authority | PASS | One `Home`-owned `LocalIdentitySession`; Create/Import updates all consumers; Lock invokes session lock and removes capability everywhere. |
 | Cross-surface nonce lifecycle | PASS after correction | One page-runtime reservations/attempts lifecycle is shared by Onboarding and Rooms; fixed-clock E2E proves navigation does not reuse a nonce. |
-| Secret handling and persistence | PASS | No secret getter, serialization, DOM output, URL sink, logging, server route, storage API, database, cache, cookie, or telemetry path. |
+| Secret handling and persistence | PASS | At this review point there was no secret getter, serialization, DOM output, URL sink, logging, server route, storage API, database, cache, cookie, or telemetry path. The later ADR 001 Product Owner amendment adds only a confirmed client-only Advanced DOM reveal; every other exclusion remains. |
 | Backup security | PASS | 16 KiB pre-KDF bound; exact schema/version/KDF/cipher/canonical-encoding validation; authenticated decrypt and DID match fail closed. Crypto unchanged. |
 | Signing and nonce | PASS | Exact `<room>|<nonce>|<post-sweep text>` UTF-8 payload, canonical signature, self-verification, BigInt/string arithmetic, DID+room reservation, and edit invalidation retained. |
 | Publish boundary | PASS | Explicit-only browser-direct fixed-origin signed GET; burn before fetch; no retry, relay, alternate transport, rendered URL, or content-triggered write. |

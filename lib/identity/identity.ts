@@ -13,6 +13,7 @@ import {
 import { decryptSeedBackup, encryptSeedBackup, parseAgentBackup } from "./backup";
 import {
   IdentityBackupError,
+  OWNER_SECRET_REVEAL_AUTHORIZATION,
   type BackupVerificationStatus,
   type LocalIdentitySession,
   type PublicIdentity,
@@ -42,6 +43,16 @@ class SessionIdentity implements LocalIdentitySession {
 
   get isLocked(): boolean {
     return this.#seed === null;
+  }
+
+  revealSecretKeyHex(authorization: typeof OWNER_SECRET_REVEAL_AUTHORIZATION): string {
+    if (authorization !== OWNER_SECRET_REVEAL_AUTHORIZATION) {
+      throw new IdentityBackupError("SECRET_REVEAL_NOT_AUTHORIZED", "Explicit owner confirmation is required.");
+    }
+    if (this.#seed === null) {
+      throw new IdentityBackupError("IDENTITY_LOCKED", "Identity session is locked.");
+    }
+    return Array.from(this.#seed, (byte) => byte.toString(16).padStart(2, "0")).join("");
   }
 
   async createEncryptedBackup(passphrase: string): Promise<string> {

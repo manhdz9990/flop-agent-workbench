@@ -46,7 +46,7 @@ Encrypted user-downloaded backup files are allowed. Temporary decrypted material
 
 ### V1.2 threats and locked mitigations
 
-- **Seed/private-key exfiltration:** secrets stay inside a narrow browser-only runtime boundary, are never rendered or transmitted, and are excluded from public/serializable models.
+- **Seed/private-key exfiltration:** secrets stay inside a narrow browser-only runtime boundary and are never transmitted or persisted. The sole rendering exception is the explicitly confirmed, masked-by-default My Agent Advanced Secret Key flow; secrets remain excluded from ordinary UI and public/serializable models.
 - **Passphrase leakage:** passphrases remain browser-local, are never stored or logged, and temporary encoded buffers are cleared where practical.
 - **Malicious or tampered backup:** imports are bounded and schema/version/encoding validated before expensive work; authenticated encryption fails closed; the restored DID must match the envelope DID.
 - **Weak backup passphrase:** user-facing work communicates passphrase responsibility; approved key-derivation parameters are enforced by the versioned contract rather than caller-controlled downgrades.

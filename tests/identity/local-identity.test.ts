@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   AGENT_BACKUP_FORMAT,
   BACKUP_KDF_ITERATIONS,
+  OWNER_SECRET_REVEAL_AUTHORIZATION,
   generateLocalIdentity,
   importEncryptedIdentity,
   parseAgentBackup,
@@ -73,7 +74,12 @@ describe("browser-local identity", () => {
     expect(decodeEd25519DidKey(identity.publicIdentity.did)).toEqual(
       base64urlnopad.decode(identity.publicIdentity.publicKey),
     );
+    expect(identity.revealSecretKeyHex(OWNER_SECRET_REVEAL_AUTHORIZATION)).toBe("0".repeat(64));
+    expect(identity.revealSecretKeyHex(OWNER_SECRET_REVEAL_AUTHORIZATION)).toMatch(/^[0-9a-f]{64}$/);
     identity.lock();
+    expect(() => identity.revealSecretKeyHex(OWNER_SECRET_REVEAL_AUTHORIZATION)).toThrowError(
+      expect.objectContaining({ code: "IDENTITY_LOCKED" }),
+    );
   });
 
   it("keeps secret material out of the serializable public session model", async () => {
@@ -93,7 +99,10 @@ describe("encrypted identity backup", () => {
   it("uses the canonical schema and verifies only after successful re-import", async () => {
     const identity = await generateLocalIdentity();
     const backup = await identity.createEncryptedBackup(PASSPHRASE);
+    expect(backup).toContain("\n  \"format\"");
     const envelope = parseAgentBackup(backup);
+    const legacyMinifiedV1 = JSON.stringify(JSON.parse(backup));
+    expect(parseAgentBackup(legacyMinifiedV1)).toEqual(envelope);
 
     expect(envelope).toEqual({
       format: AGENT_BACKUP_FORMAT,
@@ -112,8 +121,11 @@ describe("encrypted identity backup", () => {
     const restored = await importEncryptedIdentity(backup, PASSPHRASE);
     expect(restored.publicIdentity).toEqual(identity.publicIdentity);
     expect(restored.backupVerificationStatus).toBe("VERIFIED");
+    const restoredFromLegacyMinifiedV1 = await importEncryptedIdentity(legacyMinifiedV1, PASSPHRASE);
+    expect(restoredFromLegacyMinifiedV1.publicIdentity).toEqual(identity.publicIdentity);
     identity.lock();
     restored.lock();
+    restoredFromLegacyMinifiedV1.lock();
   });
 
   it("contains neither plaintext seed material nor the passphrase", async () => {

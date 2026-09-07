@@ -14,13 +14,20 @@ test("V12-09R corrected single-shell visual preflight", async ({ page }) => {
   await page.screenshot({ path: "artifacts/v12-10-preflight/desktop-sidebar-collapsed.png", fullPage: true });
   await page.getByRole("button", { name: "Expand sidebar" }).click();
   await expect(page.locator(".sidebar-brand img")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Create Agent →" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create New Agent", exact: true })).toBeVisible();
   await page.screenshot({ path: "artifacts/v12-10-preflight/desktop-no-did-landing.png", fullPage: true });
 
-  await page.getByRole("button", { name: "Create Agent →" }).click();
-  await page.getByRole("button", { name: "Create identity" }).click();
+  await page.getByRole("button", { name: "Create New Agent", exact: true }).click();
+  await page.getByRole("button", { name: "Create New Agent", exact: true }).click();
   await page.locator(".sidebar-brand").click();
   await expect(page.getByRole("heading", { name: "Home" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Secure your backup" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create New Agent", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Open My Agent" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Open My Agent" })).toHaveText(/^z6[A-Za-z0-9]{2}…[A-Za-z0-9]{4}$/);
+  await page.getByRole("button", { name: "Open My Agent" }).click();
+  await expect(page.getByRole("heading", { name: "My Agent", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Home", exact: true }).click();
   await page.screenshot({ path: "artifacts/v12-10-preflight/desktop-active-home.png", fullPage: true });
 
   await page.getByRole("button", { name: "My Agent", exact: true }).click();
@@ -32,6 +39,7 @@ test("V12-09R corrected single-shell visual preflight", async ({ page }) => {
   await page.screenshot({ path: "artifacts/v12-10-preflight/desktop-evidence-empty.png", fullPage: true });
 
   await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("button", { name: "Open My Agent" })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Workbench" })).toBeHidden();
   await page.getByRole("button", { name: "Open Workbench menu" }).click();
   await expect(page.getByRole("navigation", { name: "Workbench" })).toBeVisible();

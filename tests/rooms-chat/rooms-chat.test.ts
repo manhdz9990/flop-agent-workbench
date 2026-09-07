@@ -101,7 +101,7 @@ describe("V12-08A Rooms / Chat adapter", () => {
 
   it("presents a minimal direct composer without a new general message limit", () => {
     const source = readFileSync(new URL("../../app/rooms-chat.tsx", import.meta.url), "utf8");
-    for (const copy of ["Read-only conversation", "Create or Import Agent", "Composer locked", "Secure Backup", "Message #", "Send", "character", "Shift"]) {
+    for (const copy of ["Read-only conversation", "Create or Restore Agent", "Composer locked", "Secure Backup", "Message #", "Send", "character", "Shift"]) {
       if (copy !== "Shift") expect(source).toContain(copy);
     }
     expect(source).toContain('event.key === "Enter" && !event.shiftKey');

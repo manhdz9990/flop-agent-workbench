@@ -52,6 +52,8 @@ The V1.1 inspection pipeline remains unchanged. V1.2 may add a separate browser-
 
 Import follows the inverse local boundary: validate a bounded, versioned envelope before expensive cryptography; decrypt and authenticate in the browser; validate the decrypted seed; re-derive the public key and DID; and require the derived DID to match the public envelope. Secret-bearing runtime types remain separate from serializable public models. Unlocked secret material is session-memory only and must not enter application-server requests, browser persistence, URLs, logs, telemetry, or analytics.
 
+Identity ownership outlives an unlocked runtime session conceptually: clearing memory does not prove that the Agent no longer exists. The only approved restore path is the same V1 import boundary above, using the user-owned Encrypted Backup plus Backup Password. Successful import creates the existing verified runtime session for the same derived DID; it does not create a new identity, persist an automatic login, contact the Workbench server, or introduce a second recovery model.
+
 V12-01 has no network-write path. A future separately authorized publishing phase must use an explicit user action and a fixed browser-direct Technocore endpoint: `Browser → fixed Technocore write endpoint`. The forbidden topology is `Browser → Workbench server → Technocore write`.
 
 Signing and publishing are separate explicit actions. There is no automatic publish or retry, and a nonce must not be reused after an ambiguous publish attempt. A future publish-success claim requires exact read-back and independent verification. These are architecture constraints, not implemented V12-01 behavior.
