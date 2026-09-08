@@ -1,5 +1,9 @@
 # Production Checklist
 
+## V1.4 verified release — 2026-09-08
+
+V1.4 application commit `f8d0f8eb696ddedbec1ea8084fdcf37866921c91` was built and deployed by the existing Git integration as Vercel deployment `dpl_8SVf2ygPBpBnk74NVvFnD1r5so2B`. Read-only production smoke, security headers, responsive UI, clean and controlled Locked-Agent contexts, and public Rooms live-read passed at `https://flop-agent-workbench.vercel.app`. No automated Technocore write or X action occurred. Rollback: V1.3 commit `b285af7976d7997364590df7150f68b37b3d65bf`, deployment `dpl_FuLiANtbwytnofq3akXinhktPwcC`.
+
 Status: NOT DEPLOYED. V12-10 application preflight PASS; Final Release Review is pending and operational ownership decisions remain BLOCKING for deployment.
 
 ## Before deployment authorization

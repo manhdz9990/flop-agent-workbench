@@ -1,8 +1,24 @@
 # PROJECT_STATUS
 
+## V1.4 Production Release — 2026-09-08
+
+**State: V1.4 RELEASED — PRODUCTION VERIFIED.** Package version `1.4.0`. Application release commit `f8d0f8eb696ddedbec1ea8084fdcf37866921c91` was pushed normally to `origin/main`, preserving V1.3 application commit `b285af7976d7997364590df7150f68b37b3d65bf` and documentation commit `30a09993e4f43cf68b7a86fa07008607d2421cf1`. Existing Vercel project `manh100k/flop-agent-workbench` automatically deployed that exact Git commit as `dpl_8SVf2ygPBpBnk74NVvFnD1r5so2B`, status Ready, at `https://flop-agent-workbench.vercel.app`.
+
+Read-only production verification PASS: clean Home, Create/Restore/Import, My Agent, Evidence, Developer Tools, Public Rooms, controlled synthetic encrypted saved-Agent recognition, Locked/Unlock UI, desktop 1440×900, mobile 390×844, and page overflow checks passed. `/` and `/api/rooms` returned HTTP 200 with HSTS, `nosniff`, `no-referrer`, frame `DENY`, and restrictive Permissions Policy headers. Vercel build logs confirm branch `main`, commit `f8d0f8e`, package `1.4.0`, and successful Next.js build. Automated live Technocore writes and X actions: zero.
+
+Rollback reference: V1.3 application commit `b285af7976d7997364590df7150f68b37b3d65bf`, Vercel deployment `dpl_FuLiANtbwytnofq3akXinhktPwcC`, immutable URL `https://flop-agent-workbench-mh0ketzk9-manh100k.vercel.app`.
+
+Known limitations: persistence is local to one browser origin/device with no cloud recovery; site-data clearing removes the browser copy; browser-storage compromise can copy ciphertext/public context; compromise while unlocked can access runtime signing; owners must retain their separate encrypted backup and password; advanced Card/X contribution interaction state remains transient unless represented by explicitly retained qualified Evidence; X ownership/content/attachment remains unverified; Technocore observations remain bounded and non-durable.
+
+The post-release documentation commit is intentionally local-only because pushing it through the existing Git integration would trigger an unnecessary second production deployment and no approved deployment-skip mechanism is configured.
+
+### Exact Next Action
+
+No Product Owner action is required. Retain the local documentation-only commit until a future authorized application release can carry it without a redundant deployment.
+
 ## V1.4 Persistent Agent — 2026-09-08
 
-**State: V1.4 RELEASE AUTHORIZED — FINAL RELEASE GATE IN PROGRESS.** One versioned, bounded browser-local boundary retains only Workbench Backup V1 ciphertext and validated public identity/profile/evidence. Fresh loads are Locked; unlock reuses authenticated local decryption and exact DID/public-key checks. Lock clears the runtime seed while retaining encrypted state. Confirmed removal clears browser-local and runtime context while public records remain external.
+**State: COMPLETE / PASS.** One versioned, bounded browser-local boundary retains only Workbench Backup V1 ciphertext and validated public identity/profile/evidence. Fresh loads are Locked; unlock reuses authenticated local decryption and exact DID/public-key checks. Lock clears the runtime seed while retaining encrypted state. Confirmed removal clears browser-local and runtime context while public records remain external.
 
 No plaintext Secret Key, seed, Backup Password, nonce reservation, pending attempt, draft, server custody, API/dependency change, cloud sync, automated write, or X automation was introduced. Existing identity/signing/nonce/publish/read-back/Evidence owners remain authoritative. Product Owner manual acceptance passed the exact persisted → locked → unlock → refresh → lock → remove → same-DID restore flow. Release is explicitly authorized; production is not yet changed.
 
