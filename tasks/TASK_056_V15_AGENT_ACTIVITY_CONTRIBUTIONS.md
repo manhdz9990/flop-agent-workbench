@@ -1,6 +1,6 @@
 # TASK 056 — V1.5 Agent Activity & Contributions
 
-**State:** COMPLETE / LOCAL PASS / PRODUCT OWNER REVIEW REQUIRED.
+**State:** RELEASED / PRODUCTION VERIFIED. Application commit `f019b1abb2e8164c05fe552fdde17f53a52d8716`; Vercel deployment `dpl_DvQv5R6Kr7rXTZffWp7QSuwBfyf1`.
 
 ## Scope
 

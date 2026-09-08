@@ -1,8 +1,10 @@
 # PROJECT_STATUS
 
-## V1.5 Agent Activity & Contributions — 2026-09-08
+## V1.5 Production Release — 2026-09-08
 
-**State: V1.5 AGENT ACTIVITY & CONTRIBUTIONS — PRODUCT OWNER REVIEW REQUIRED.** My Agent now presents a bounded public My Contributions workspace with empty, list, detail, exact Evidence Receipt download, and Add Contribution states. Only the established exact authoritative `READBACK_VERIFIED + PUBLISHED_AND_VERIFIED + VALID` evidence path qualifies; progress flags, responses, unknown/not-observed states, unrelated records, and non-VALID evidence do not.
+**State: V1.5 RELEASED — PRODUCTION VERIFIED.** Package version `1.5.0`. Product Owner manual acceptance passed. Application release commit `f019b1abb2e8164c05fe552fdde17f53a52d8716` was pushed normally to `origin/main`, preserving V1.4 production commit `f8d0f8eb696ddedbec1ea8084fdcf37866921c91` and local documentation commit `0a1246ba5ac5d3f1533184d4536bee35906b5715`. Existing Vercel project `manh100k/flop-agent-workbench` deployed the exact main commit as `dpl_DvQv5R6Kr7rXTZffWp7QSuwBfyf1`, status Ready, at `https://flop-agent-workbench.vercel.app`.
+
+Read-only production Chromium verification PASS: clean Home and Create/Restore entry points; My Agent; empty and controlled populated My Contributions; public evidence detail; Locked public history; Locked Add Contribution gate; Unlocked zero-contribution X-reference entry; Evidence; Developer Tools; Rooms; desktop 1440×900 and mobile 390×844 overflow; and mobile navigation. `/` and `/api/rooms` returned HTTP 200. HSTS, `nosniff`, `no-referrer`, frame `DENY`, and restrictive Permissions Policy headers were present. Vercel logs confirm branch `main`, commit `f019b1a`, package `1.5.0`, and successful Next.js build. Automated live Technocore writes and X actions: zero.
 
 Product Owner manual review identified and the local implementation corrected two blockers: an Unlocked Agent with zero contributions now enters the X-reference step directly using the canonical direct V1.5 public record, without an earlier Agent Card record; and both V1 and already-written V2 saved records now rebuild their contribution projection from every retained qualifying Evidence entry, so authoritative V1.3 onboarding contributions backfill automatically. Locked Agents remain unable to enter signing, and no URL/click/local flag qualifies without exact authoritative `VALID` read-back.
 
@@ -12,11 +14,13 @@ Final local verification: typecheck PASS; 33/33 unit/integration files and 426/4
 
 Known limitations: contributions are device/browser-origin-local, bounded to 50, depend on evidence the Workbench itself retained and verified, and are not a complete Technocore archive. X references are user-supplied and do not prove X ownership, content, or attachment. Observed protocol evidence does not establish identity, trust, quality, payment, rewards, eligibility, or FLOP Labs approval.
 
-Commit/push/deploy: **NO / NO / NO.** Existing local release history remains unchanged: HEAD `0a1246ba5ac5d3f1533184d4536bee35906b5715`, ahead of production `origin/main` `f8d0f8eb696ddedbec1ea8084fdcf37866921c91` by the intentionally local V1.4 documentation commit.
+Rollback reference: V1.4 application commit `f8d0f8eb696ddedbec1ea8084fdcf37866921c91`, Vercel deployment `dpl_8SVf2ygPBpBnk74NVvFnD1r5so2B`, immutable URL `https://flop-agent-workbench-lq72u89ig-manh100k.vercel.app`.
+
+This post-release status update is documentation-only and remains local because pushing it through the existing Git integration would trigger an unnecessary second production deployment. No Vercel configuration is changed solely to avoid that deployment.
 
 ### Exact Next Action
 
-Product Owner manually reviews V1.5 My Contributions while Unlocked, Locked, and after refresh, then separately authorizes release preparation only if accepted.
+No Product Owner action is required. Monitor normal production behavior and authorize future work separately.
 
 ## V1.4 Production Release — 2026-09-08
 
