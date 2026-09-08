@@ -1,11 +1,15 @@
 import type { EvidenceReceipt } from "../receipt";
 
 export const CONTRIBUTION_SCHEMA="flop-agent-contribution/v1" as const;
+export const DIRECT_CONTRIBUTION_SCHEMA="flop-agent-contribution/v2" as const;
 export const CONTRIBUTION_ROOM="lobby" as const;
 export const CONTRIBUTION_RECEIPT_SCHEMA="flop-contribution-evidence-receipt/v1" as const;
-export const CONTRIBUTION_LIMITATION="This receipt records observed protocol evidence. It does not establish real-world identity, trustworthiness, payment, settlement, rewards, or eligibility.";
+export const CONTRIBUTION_LIMITATION="This receipt records observed protocol evidence. It does not establish real-world identity, trustworthiness, payment, settlement, rewards, eligibility, or FLOP Labs approval.";
 
-export interface PublicContributionRecord{readonly schema:typeof CONTRIBUTION_SCHEMA;readonly type:"agent-card";readonly did:string;readonly display_name:string;readonly x_post_url:string;readonly product:"FLOP Agent Workbench";readonly first_record:{readonly room:"lobby";readonly seq:string}}
+interface ContributionRecordBase{readonly did:string;readonly x_post_url:string;readonly product:"FLOP Agent Workbench"}
+export interface AgentCardContributionRecord extends ContributionRecordBase{readonly schema:typeof CONTRIBUTION_SCHEMA;readonly type:"agent-card";readonly display_name:string;readonly first_record:{readonly room:"lobby";readonly seq:string}}
+export interface DirectContributionRecord extends ContributionRecordBase{readonly schema:typeof DIRECT_CONTRIBUTION_SCHEMA;readonly type:"x-reference"}
+export type PublicContributionRecord=AgentCardContributionRecord|DirectContributionRecord;
 
 export function normalizeXPostUrl(input:string):string{
   if(input.length<1||input.length>256)throw new Error("X Post URL must be between 1 and 256 characters.");
@@ -22,6 +26,10 @@ export function createContributionRecord(input:{did:string;displayName:string;xP
   if(input.firstRoom!=="lobby"||!/^[0-9]{1,64}$/.test(input.firstSeq))throw new Error("First signed record reference is invalid.");
   return {schema:CONTRIBUTION_SCHEMA,type:"agent-card",did:input.did,display_name:display,x_post_url:normalizeXPostUrl(input.xPostUrl),product:"FLOP Agent Workbench",first_record:{room:"lobby",seq:input.firstSeq}};
 }
+export function createDirectContributionRecord(input:{did:string;xPostUrl:string}):DirectContributionRecord{
+  if(!/^did:key:z6Mk[1-9A-HJ-NP-Za-km-z]+$/.test(input.did)||input.did.length>100)throw new Error("Public DID is invalid.");
+  return {schema:DIRECT_CONTRIBUTION_SCHEMA,type:"x-reference",did:input.did,x_post_url:normalizeXPostUrl(input.xPostUrl),product:"FLOP Agent Workbench"};
+}
 export function serializeContributionRecord(record:PublicContributionRecord):string{return JSON.stringify(record);}
 
 export interface ContributionEvidenceReceipt{readonly schema:typeof CONTRIBUTION_RECEIPT_SCHEMA;readonly product:"FLOP Agent Workbench";readonly product_version:"1.3";readonly contribution:PublicContributionRecord;readonly contribution_record:{readonly room:"lobby";readonly seq:string;readonly timestamp?:string};readonly evidence_verdict:"VALID";readonly protocol_evidence:EvidenceReceipt;readonly limitations:readonly[string]}
@@ -31,4 +39,4 @@ export function createContributionReceipt(input:{contribution:PublicContribution
 }
 export function serializeContributionReceiptJson(receipt:ContributionEvidenceReceipt):string{return `${JSON.stringify(receipt,null,2)}\n`;}
 function safe(value:string):string{return value.replace(/\\/g,"\\\\").replace(/`/g,"\\`").replace(/\r?\n/g," ");}
-export function serializeContributionReceiptMarkdown(receipt:ContributionEvidenceReceipt):string{return [`# FLOP Contribution Evidence Receipt`,``,`- Schema: \`${receipt.schema}\``,`- Product: ${receipt.product} ${receipt.product_version}`,`- Public DID: \`${safe(receipt.contribution.did)}\``,`- Display Name: ${safe(receipt.contribution.display_name)} (self-declared)`,`- Type: \`${receipt.contribution.type}\``,`- X reference: ${safe(receipt.contribution.x_post_url)}`,`- First signed record: \`#${receipt.contribution.first_record.room} · #${receipt.contribution.first_record.seq}\``,`- Contribution record: \`#${receipt.contribution_record.room} · #${receipt.contribution_record.seq}\``,`- Evidence verdict: \`${receipt.evidence_verdict}\``,...(receipt.contribution_record.timestamp?[`- Observed timestamp: \`${safe(receipt.contribution_record.timestamp)}\``]:[]),``,`## Limitation`,``,receipt.limitations[0],``].join("\n");}
+export function serializeContributionReceiptMarkdown(receipt:ContributionEvidenceReceipt):string{return [`# FLOP Contribution Evidence Receipt`,``,`- Schema: \`${receipt.schema}\``,`- Product: ${receipt.product} ${receipt.product_version}`,`- Public DID: \`${safe(receipt.contribution.did)}\``,...(receipt.contribution.type==="agent-card"?[`- Display Name: ${safe(receipt.contribution.display_name)} (self-declared)`]:[]),`- Type: \`${receipt.contribution.type}\``,`- X reference: ${safe(receipt.contribution.x_post_url)}`,...(receipt.contribution.type==="agent-card"?[`- First signed record: \`#${receipt.contribution.first_record.room} · #${receipt.contribution.first_record.seq}\``]:[]),`- Contribution record: \`#${receipt.contribution_record.room} · #${receipt.contribution_record.seq}\``,`- Evidence verdict: \`${receipt.evidence_verdict}\``,...(receipt.contribution_record.timestamp?[`- Observed timestamp: \`${safe(receipt.contribution_record.timestamp)}\``]:[]),``,`## Limitation`,``,receipt.limitations[0],``].join("\n");}

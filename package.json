@@ -1,6 +1,6 @@
 {
   "name": "flop-agent-workbench",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Browser-local workbench for participating in Technocore and inspecting protocol evidence.",
   "private": true,
   "type": "module",

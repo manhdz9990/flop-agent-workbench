@@ -1,6 +1,31 @@
 import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 
+test("V1.5 unlocked persisted Agent with zero contributions reaches the X-reference step without publishing", async ({ page }) => {
+  let writeCount = 0;
+  await page.route("https://technocore.chat/r/**/say-signed/**", async (route) => { writeCount += 1; await route.abort(); });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Create New Agent", exact: true }).click();
+  await page.getByRole("button", { name: "Create New Agent", exact: true }).click();
+  const password = "v15-zero-contribution-passphrase";
+  await page.getByLabel("Backup Password").fill(password);
+  await page.getByRole("button", { name: "Create Encrypted Backup" }).click();
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download Encrypted Backup" }).click();
+  const backupPath = await (await download).path();
+  await page.getByLabel("Encrypted Backup").setInputFiles(backupPath!);
+  await page.getByLabel("Backup Password").fill(password);
+  await page.getByRole("button", { name: "Verify My Backup" }).click();
+  await page.getByLabel(/Display Name/).fill("First Contributor");
+  await page.getByRole("button", { name: "Save Profile and Continue" }).click();
+  await page.getByRole("button", { name: "My Agent", exact: true }).click();
+  await expect(page.getByText("No verified contributions recorded yet.")).toBeVisible();
+  await page.getByRole("button", { name: "Add Contribution" }).click();
+  await expect(page.getByRole("heading", { name: "Add your X post" })).toBeVisible();
+  await expect(page.getByLabel("X Post URL")).toBeVisible();
+  expect(writeCount).toBe(0);
+});
+
 test("V13-05 completes public contribution evidence only after a second exact VALID read-back", async ({ page }) => {
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   let xIntentUrl = "";
@@ -92,7 +117,7 @@ test("V13-05 completes public contribution evidence only after a second exact VA
   await page.getByRole("button",{name:"Continue",exact:true}).click();
   await expect(page.getByRole("heading",{name:"Review your contribution record"})).toBeVisible();
   await expect(page.getByText("https://x.com/FLOP_Explorer/status/123456789",{exact:true})).toBeVisible();
-  await expect(page.getByText(/Workbench onboarding convention/)).toBeVisible();expect(writeCount).toBe(1);
+  await expect(page.getByText(/Workbench convention/)).toBeVisible();expect(writeCount).toBe(1);
   await page.getByRole("button",{name:"Sign & Record"}).click();await expect(page.getByRole("heading",{name:"Verify your contribution record"})).toBeVisible();expect(writeCount).toBe(2);
   await page.getByRole("button",{name:"Check contribution"}).click();await expect(page.getByRole("heading",{name:"Your Agent is ready"})).toBeVisible();expect(writeCount).toBe(2);
   for (const viewport of [{ width: 1440, height: 900 }, { width: 1280, height: 720 }, { width: 768, height: 1024 }, { width: 390, height: 844 }]) {
@@ -110,6 +135,24 @@ test("V13-05 completes public contribution evidence only after a second exact VA
   await page.getByRole("button",{name:"Copy Evidence"}).click();await expect(page.getByText("Evidence copied.")).toBeVisible();
   await page.getByRole("button",{name:"Enter Technocore Rooms"}).click();await expect(page.locator(".rooms-chat")).toBeVisible();
   await page.getByRole("button",{name:"My Agent",exact:true}).click();await expect(page.getByRole("heading",{name:"My Agent",exact:true})).toBeVisible();
+  await expect(page.getByRole("heading",{name:"My Contributions"})).toBeVisible();
+  await expect(page.getByText("FLOP Explorer · Agent Card")).toBeVisible();
+  await expect(page.getByText(/Signature Verified/).first()).toBeVisible();
+  await page.getByRole("button",{name:"View Evidence"}).click();
+  await expect(page.getByRole("dialog")).toContainText("Authoritative sequence");
+  await expect(page.getByRole("dialog")).toContainText("#902");
+  await page.getByRole("button",{name:"Close contribution evidence"}).click();
+  await page.getByRole("button",{name:"Lock Agent"}).click();await page.getByRole("dialog").getByRole("button",{name:"Lock Agent"}).click();
+  await expect(page.getByRole("button",{name:"Add Contribution"})).toBeDisabled();
+  await expect(page.getByText("FLOP Explorer · Agent Card")).toBeVisible();
+  await page.reload();await page.getByRole("button",{name:"My Agent",exact:true}).click();
+  await expect(page.getByText("FLOP Explorer · Agent Card")).toBeVisible();
+  await expect(page.getByRole("button",{name:"Add Contribution"})).toBeDisabled();
+  await page.getByLabel("Backup Password").fill(password);await page.getByRole("button",{name:"Unlock Agent"}).click();
+  await expect(page.getByRole("button",{name:"Add Contribution"})).toBeEnabled();
+  await page.getByRole("button",{name:"Add Contribution"}).click();
+  await expect(page.getByRole("heading",{name:"Add your X post"})).toBeVisible();
+  expect(writeCount).toBe(2);
   await page.getByRole("button",{name:"Evidence",exact:true}).click();await expect(page.getByRole("heading",{name:"Observed Evidence",exact:true})).toBeVisible();
 
   expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length }))).toEqual({ local: 1, session: 0 });

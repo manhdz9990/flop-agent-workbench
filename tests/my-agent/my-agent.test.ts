@@ -9,6 +9,15 @@ const rooms = readFileSync(new URL("../../app/rooms-chat.tsx", import.meta.url),
 const api = ["inspect", "rooms"].map((name) => readFileSync(new URL(`../../app/api/${name}/route.ts`, import.meta.url), "utf8")).join("\n");
 
 describe("V12-08B and V12-09 Phase 4 My Agent integration", () => {
+  it("shows persistent qualifying contributions publicly while keeping new signing locked", () => {
+    for (const copy of ["My Contributions", "Add Contribution", "No verified contributions recorded yet.", "Signature Verified", "View Evidence", "Public Evidence Receipt"]) expect(component).toContain(copy);
+    expect(component).toContain("disabled={identity.isLocked}");
+    expect(page).toContain("contributions={persistedAgent?.contributions ?? []}");
+    expect(page).toContain("onAddContribution={openAddContribution}");
+    expect(page).toContain("contributionOnly={addingContribution}");
+    expect(page).not.toContain("Add Contribution needs an existing signature-verified Technocore record");
+    expect(component).not.toMatch(/fetch\s*\(|prepareSignedMessage|publishPreparedMessage|verifyPublishedReadback/);
+  });
   it("presents truthful no-active and active public identity states", () => {
     for (const copy of ["Agent not loaded", "Your Agent is not currently unlocked in this browser.", "Restore Workbench Agent", "Import Existing Agent", "Create New Agent", "Public DID", "Unlocked for this browser session", "Backup verification", "Signing readiness", "Lock Agent", "Welcome back", "Remove Agent from this browser"]) expect(component).toContain(copy);
     expect(component).toContain("identity.publicIdentity.did");

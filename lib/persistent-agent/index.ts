@@ -2,18 +2,21 @@ import { parseAgentBackup, type BackupVerificationStatus, type PublicIdentity } 
 import { base64urlnopad } from "@scure/base";
 import { decodeEd25519DidKey } from "../protocol";
 import type { EvidenceActivityEntry } from "../evidence-activity";
+import { rebuildPersistedContributions, type PersistedContribution } from "../contribution";
 import { validateAgentProfile, type AgentProfile } from "../onboarding";
 
 export const PERSISTENT_AGENT_STORAGE_KEY = "flop.workbench.persistent-agent.v1";
 export const PERSISTENT_AGENT_SCHEMA = "flop-persistent-agent/v1" as const;
+export const PERSISTENT_AGENT_SCHEMA_V2 = "flop-persistent-agent/v2" as const;
 
 export interface PersistentAgentRecord {
-  readonly schema: typeof PERSISTENT_AGENT_SCHEMA;
+  readonly schema: typeof PERSISTENT_AGENT_SCHEMA_V2;
   readonly encryptedBackup: string;
   readonly publicIdentity: PublicIdentity;
   readonly backupVerificationStatus: BackupVerificationStatus;
   readonly profile?: AgentProfile;
   readonly evidence: readonly EvidenceActivityEntry[];
+  readonly contributions: readonly PersistedContribution[];
 }
 
 export interface StorageLike {
@@ -45,7 +48,7 @@ function safeEvidence(value: unknown, did: string): readonly EvidenceActivityEnt
 export function parsePersistentAgent(serialized: string): PersistentAgentRecord {
   if (new TextEncoder().encode(serialized).length > 256 * 1024) throw new Error("Saved Agent exceeds the allowed size.");
   const root = object(JSON.parse(serialized) as unknown);
-  if (root.schema !== PERSISTENT_AGENT_SCHEMA || typeof root.encryptedBackup !== "string" || (root.backupVerificationStatus !== "NOT_VERIFIED" && root.backupVerificationStatus !== "VERIFIED")) throw new Error("Saved Agent version is unsupported.");
+  if ((root.schema !== PERSISTENT_AGENT_SCHEMA && root.schema !== PERSISTENT_AGENT_SCHEMA_V2) || typeof root.encryptedBackup !== "string" || (root.backupVerificationStatus !== "NOT_VERIFIED" && root.backupVerificationStatus !== "VERIFIED")) throw new Error("Saved Agent version is unsupported.");
   const envelope = parseAgentBackup(root.encryptedBackup);
   const identity = object(root.publicIdentity);
   if (identity.did !== envelope.did || typeof identity.publicKey !== "string" || identity.publicKey !== base64urlnopad.encode(decodeEd25519DidKey(envelope.did))) throw new Error("Saved Agent identity does not match its encrypted backup.");
@@ -55,7 +58,9 @@ export function parsePersistentAgent(serialized: string): PersistentAgentRecord 
     if (typeof candidate.displayName !== "string" || (candidate.xUsername !== undefined && typeof candidate.xUsername !== "string") || (candidate.description !== undefined && typeof candidate.description !== "string")) throw new Error("Saved Agent profile is invalid.");
     profile = validateAgentProfile({ displayName: candidate.displayName, ...(typeof candidate.xUsername === "string" ? { xUsername: candidate.xUsername } : {}), ...(typeof candidate.description === "string" ? { description: candidate.description } : {}) });
   }
-  return Object.freeze({ schema: PERSISTENT_AGENT_SCHEMA, encryptedBackup: root.encryptedBackup, publicIdentity: Object.freeze({ did: envelope.did, publicKey: identity.publicKey }), backupVerificationStatus: root.backupVerificationStatus, ...(profile ? { profile } : {}), evidence: safeEvidence(root.evidence, envelope.did) });
+  const evidence = safeEvidence(root.evidence, envelope.did);
+  const contributions = rebuildPersistedContributions(evidence);
+  return Object.freeze({ schema: PERSISTENT_AGENT_SCHEMA_V2, encryptedBackup: root.encryptedBackup, publicIdentity: Object.freeze({ did: envelope.did, publicKey: identity.publicKey }), backupVerificationStatus: root.backupVerificationStatus, ...(profile ? { profile } : {}), evidence, contributions });
 }
 
 export function loadPersistentAgent(storage: StorageLike): PersistentAgentRecord | undefined {

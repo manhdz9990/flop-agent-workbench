@@ -1,5 +1,23 @@
 # PROJECT_STATUS
 
+## V1.5 Agent Activity & Contributions — 2026-09-08
+
+**State: V1.5 AGENT ACTIVITY & CONTRIBUTIONS — PRODUCT OWNER REVIEW REQUIRED.** My Agent now presents a bounded public My Contributions workspace with empty, list, detail, exact Evidence Receipt download, and Add Contribution states. Only the established exact authoritative `READBACK_VERIFIED + PUBLISHED_AND_VERIFIED + VALID` evidence path qualifies; progress flags, responses, unknown/not-observed states, unrelated records, and non-VALID evidence do not.
+
+Product Owner manual review identified and the local implementation corrected two blockers: an Unlocked Agent with zero contributions now enters the X-reference step directly using the canonical direct V1.5 public record, without an earlier Agent Card record; and both V1 and already-written V2 saved records now rebuild their contribution projection from every retained qualifying Evidence entry, so authoritative V1.3 onboarding contributions backfill automatically. Locked Agents remain unable to enter signing, and no URL/click/local flag qualifies without exact authoritative `VALID` read-back.
+
+The single canonical browser record advances deterministically to `flop-persistent-agent/v2` under the unchanged V1 storage key. V1.4 records rebuild contribution projections from retained valid evidence without changing encrypted backup bytes. Forged/malformed projections are discarded safely. The newest 50 are retained with oldest-first eviction and exact room + DID + authoritative-sequence identity; X URL is unverified and never a deduplication key. Locked Agents can view public history and receipts, while Add Contribution remains disabled until local Unlock. The existing X URL → review → local sign → one publish attempt → explicit read-back → independent VALID → Evidence Receipt owners are reused.
+
+Final local verification: typecheck PASS; 33/33 unit/integration files and 426/426 tests PASS; ESLint PASS with zero warnings; production build PASS with unchanged routes (`/`, `/api/inspect`, `/api/rooms`, framework `/_not-found`); Chromium E2E 25/25 PASS; offline npm audit PASS with 0 vulnerabilities; diff whitespace PASS. Security regression PASS: no plaintext Secret Key/seed/Backup Password, secret log, nonce reservation, pending attempt, new API/backend, server signing/write relay, database/cloud sync, automatic publish/retry, X automation, or live Technocore/X action was introduced.
+
+Known limitations: contributions are device/browser-origin-local, bounded to 50, depend on evidence the Workbench itself retained and verified, and are not a complete Technocore archive. X references are user-supplied and do not prove X ownership, content, or attachment. Observed protocol evidence does not establish identity, trust, quality, payment, rewards, eligibility, or FLOP Labs approval.
+
+Commit/push/deploy: **NO / NO / NO.** Existing local release history remains unchanged: HEAD `0a1246ba5ac5d3f1533184d4536bee35906b5715`, ahead of production `origin/main` `f8d0f8eb696ddedbec1ea8084fdcf37866921c91` by the intentionally local V1.4 documentation commit.
+
+### Exact Next Action
+
+Product Owner manually reviews V1.5 My Contributions while Unlocked, Locked, and after refresh, then separately authorizes release preparation only if accepted.
+
 ## V1.4 Production Release — 2026-09-08
 
 **State: V1.4 RELEASED — PRODUCTION VERIFIED.** Package version `1.4.0`. Application release commit `f8d0f8eb696ddedbec1ea8084fdcf37866921c91` was pushed normally to `origin/main`, preserving V1.3 application commit `b285af7976d7997364590df7150f68b37b3d65bf` and documentation commit `30a09993e4f43cf68b7a86fa07008607d2421cf1`. Existing Vercel project `manh100k/flop-agent-workbench` automatically deployed that exact Git commit as `dpl_8SVf2ygPBpBnk74NVvFnD1r5so2B`, status Ready, at `https://flop-agent-workbench.vercel.app`.

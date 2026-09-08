@@ -1,5 +1,5 @@
 import {describe,expect,it} from "vitest";
-import {CONTRIBUTION_LIMITATION,createContributionReceipt,createContributionRecord,normalizeXPostUrl,serializeContributionReceiptJson,serializeContributionReceiptMarkdown,serializeContributionRecord} from "../../lib/contribution";
+import {CONTRIBUTION_LIMITATION,createContributionReceipt,createContributionRecord,createDirectContributionRecord,normalizeXPostUrl,serializeContributionReceiptJson,serializeContributionReceiptMarkdown,serializeContributionRecord} from "../../lib/contribution";
 import type {EvidenceReceipt} from "../../lib/receipt";
 
 const DID="did:key:z6MkiV7WZDN7xQH8xCcbk8H4yGgA7G2D3XnR9mP6tK2sQ4vB";
@@ -18,6 +18,7 @@ describe("V13-05 X reference and public contribution evidence",()=>{
     expect(serializeContributionRecord(record)).toBe('{"schema":"flop-agent-contribution/v1","type":"agent-card","did":"'+DID+'","display_name":"Ada","x_post_url":"https://x.com/ada/status/123","product":"FLOP Agent Workbench","first_record":{"room":"lobby","seq":"42"}}');
     expect(Object.keys(record)).not.toEqual(expect.arrayContaining(["seed","secretKey","password","ciphertext","nonce","signature"]));
   });
+  it("serializes a direct contribution without inventing a prior record",()=>expect(serializeContributionRecord(createDirectContributionRecord({did:DID,xPostUrl:"https://x.com/ada/status/456"}))).toBe('{"schema":"flop-agent-contribution/v2","type":"x-reference","did":"'+DID+'","x_post_url":"https://x.com/ada/status/456","product":"FLOP Agent Workbench"}'));
   it("creates deterministic public JSON and Markdown receipts with limitation",()=>{
     const contribution=createContributionRecord({did:DID,displayName:"Ada",xPostUrl:"https://x.com/ada/status/123",firstRoom:"lobby",firstSeq:"42"});
     const receipt=createContributionReceipt({contribution,sequence:"99",timestamp:"2026-09-07T00:00:00Z",protocolEvidence:protocol});

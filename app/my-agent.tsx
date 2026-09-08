@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { OWNER_SECRET_REVEAL_AUTHORIZATION, type LocalIdentitySession } from "../lib/identity";
 import { createSecretKeyText } from "../lib/identity-portability";
+import { CONTRIBUTION_LIMITATION, serializeContributionReceiptJson, serializeContributionReceiptMarkdown, type PersistedContribution } from "../lib/contribution";
 
 interface MyAgentProps {
   readonly identity?: LocalIdentitySession;
@@ -13,17 +14,19 @@ interface MyAgentProps {
   readonly onImportExisting: () => void;
   readonly onBackup: () => void;
   readonly onRooms: () => void;
+  readonly onAddContribution: () => void;
   readonly onInspectDid: (did: string) => void;
   readonly onIdentityChange: (identity?: LocalIdentitySession) => void;
   readonly hasSavedAgent: boolean;
   readonly onUnlock: (password: string) => Promise<void>;
   readonly onLock: () => void;
   readonly onRemove: () => void;
+  readonly contributions: readonly PersistedContribution[];
 }
 
 type CopyState = "IDLE" | "COPIED" | "UNAVAILABLE";
 
-export function MyAgent({ identity, hasSavedAgent, onUnlock, onLock, onRemove, onBack, onCreate, onImport, onImportExisting, onBackup, onRooms, onInspectDid }: MyAgentProps) {
+export function MyAgent({ identity, contributions, hasSavedAgent, onUnlock, onLock, onRemove, onBack, onCreate, onImport, onImportExisting, onBackup, onRooms, onAddContribution, onInspectDid }: MyAgentProps) {
   const [didCopyState, setDidCopyState] = useState<CopyState>("IDLE");
   const [secretCopyState, setSecretCopyState] = useState<CopyState>("IDLE");
   const [confirmReveal, setConfirmReveal] = useState(false);
@@ -34,6 +37,7 @@ export function MyAgent({ identity, hasSavedAgent, onUnlock, onLock, onRemove, o
   const [unlockError, setUnlockError] = useState<string>();
   const [unlocking, setUnlocking] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [selectedContribution, setSelectedContribution] = useState<PersistedContribution>();
   const active = identity !== undefined && !identity.isLocked;
   const secretKeyHex = active && secretRevealed
     ? identity.revealSecretKeyHex(OWNER_SECRET_REVEAL_AUTHORIZATION)
@@ -94,6 +98,15 @@ export function MyAgent({ identity, hasSavedAgent, onUnlock, onLock, onRemove, o
     <div className="eyebrow">My Agent</div>
     <h1 id="my-agent-title">My Agent</h1>
     <p className="lede">One local cryptographic identity lets your agent sign messages that others can verify. Its encrypted backup and public context can remain in this browser, but it is not an account, login, wallet, or real-world identity.</p>
+
+    {identity && <section className="agent-contributions" aria-labelledby="my-contributions-title">
+      <div className="contributions-heading"><div><div className="eyebrow">Workbench-recorded evidence</div><h2 id="my-contributions-title">My Contributions</h2></div><button className="primary" type="button" disabled={identity.isLocked} onClick={onAddContribution}>Add Contribution</button></div>
+      {identity.isLocked && <p className="limitation">Public contribution evidence remains available while Locked. Unlock this Agent to add and sign a new contribution.</p>}
+      {contributions.length === 0 ? <div className="contribution-empty"><strong>No verified contributions recorded yet.</strong><p>This list contains only qualifying evidence observed and verified by this Workbench. It is not a complete history of this DID on Technocore.</p></div> : <div className="contribution-list">{[...contributions].reverse().map((item) => <article key={item.id}><div><strong>{item.contribution.type === "agent-card" ? `${item.contribution.display_name} · Agent Card` : "X Contribution"}</strong><a href={item.contribution.x_post_url} target="_blank" rel="noopener noreferrer">View X reference ↗</a></div><dl><dt>Technocore room</dt><dd>#{item.room}</dd><dt>Sequence</dt><dd>#{item.sequence}</dd><dt>Status</dt><dd><span className="verified-mark" aria-hidden="true">✓</span> Signature Verified</dd></dl><button className="secondary" type="button" onClick={() => setSelectedContribution(item)}>View Evidence</button></article>)}</div>}
+      <p className="limitation">{CONTRIBUTION_LIMITATION.replace("This receipt", "This evidence")}</p>
+    </section>}
+
+    {selectedContribution && <div className="publish-confirm" role="dialog" aria-modal="true" aria-labelledby="contribution-detail-title"><div className="contribution-detail"><button className="close" type="button" aria-label="Close contribution evidence" onClick={() => setSelectedContribution(undefined)}>×</button><div className="eyebrow">Public Evidence Receipt</div><h2 id="contribution-detail-title">{selectedContribution.contribution.type === "agent-card" ? `${selectedContribution.contribution.display_name} · Agent Card` : "X Contribution"}</h2><dl><dt>Agent</dt><dd className="mono break-anywhere">{selectedContribution.contribution.did}</dd><dt>X reference</dt><dd className="break-anywhere"><a href={selectedContribution.contribution.x_post_url} target="_blank" rel="noopener noreferrer">{selectedContribution.contribution.x_post_url} ↗</a></dd><dt>Technocore room</dt><dd>#{selectedContribution.room}</dd><dt>Authoritative sequence</dt><dd>#{selectedContribution.sequence}</dd><dt>Cryptographic result</dt><dd><span className="verified-mark" aria-hidden="true">✓</span> Signature Verified</dd></dl><p className="receipt-limitation">{CONTRIBUTION_LIMITATION}</p><div className="share-actions"><button className="secondary" type="button" onClick={() => downloadContribution(serializeContributionReceiptJson(selectedContribution.receipt), "flop-contribution-evidence.json", "application/json")}>Download JSON</button><button className="secondary" type="button" onClick={() => downloadContribution(serializeContributionReceiptMarkdown(selectedContribution.receipt), "flop-contribution-evidence.md", "text/markdown")}>Download Markdown</button></div></div></div>}
 
     {!active && identity && hasSavedAgent ? <section className="agent-empty agent-empty-focus persistent-agent-locked" aria-labelledby="locked-agent-title">
       <div className="eyebrow">Saved in this browser · Locked</div>
@@ -167,4 +180,10 @@ export function MyAgent({ identity, hasSavedAgent, onUnlock, onLock, onRemove, o
       {confirmRemove && <div className="publish-confirm" role="dialog" aria-modal="true" aria-labelledby="confirm-remove-active-title"><div><h3 id="confirm-remove-active-title">Remove this Agent from this browser?</h3><p>This locks the Agent and clears its encrypted local copy, public profile, and saved evidence from this browser.</p><strong>It does not delete the public DID or Technocore records. Keep your own encrypted backup and Backup Password if you may restore it later.</strong><div className="confirm-actions"><button className="danger-action" type="button" onClick={onRemove}>Remove Agent</button><button className="secondary" type="button" onClick={() => setConfirmRemove(false)}>Cancel</button></div></div></div>}
     </>}
   </section>;
+}
+
+function downloadContribution(content: string, filename: string, mimeType: string): void {
+  const url = URL.createObjectURL(new Blob([content], { type: mimeType }));
+  try { const link = document.createElement("a"); link.href = url; link.download = filename; link.rel = "noopener"; link.click(); }
+  finally { URL.revokeObjectURL(url); }
 }
