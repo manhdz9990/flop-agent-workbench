@@ -42,8 +42,9 @@ describe("V12-08D combined integration and security boundaries", () => {
     expect(rooms).toMatch(/message\.verdict === "VALID"[^]*message\.signature === item\.prepared!\.signature/);
   });
 
-  it("contains no persistence, unsafe HTML sink, background network loop, or sensitive logging", () => {
-    expect(implementation).not.toMatch(/localStorage|sessionStorage|indexedDB|document\.cookie|caches\.(?:open|match|put)|serviceWorker\.register/);
+  it("contains only approved encrypted browser persistence and no unsafe sink, background loop, or logging", () => {
+    expect(page).toContain("window.localStorage");
+    expect(implementation).not.toMatch(/sessionStorage|indexedDB|document\.cookie|caches\.(?:open|match|put)|serviceWorker\.register/);
     expect(implementation).not.toMatch(/dangerouslySetInnerHTML|innerHTML\s*=|eval\s*\(|new Function\s*\(/);
     expect(implementation).not.toMatch(/setInterval|WebSocket|EventSource/);
     expect(implementation).not.toMatch(/console\.(?:log|error|warn|debug)\s*\(/);
@@ -72,7 +73,7 @@ describe("V12-08D combined integration and security boundaries", () => {
 
   it("uses only limitation copy for prohibited identity, history, and scoring claims", () => {
     expect(page).toContain("not a system of record");
-    expect(appSources[3]).toContain("not an account, login, wallet, or persistent profile");
+    expect(appSources[3]).toContain("not an account, login, wallet, or real-world identity");
     expect(appSources[4]).toContain("not durable account history, complete activity, contribution credit, rewards, eligibility, reputation, or a trust score");
     expect(rooms).toContain("Retained data is not complete history.");
   });

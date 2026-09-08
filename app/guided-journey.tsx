@@ -25,6 +25,7 @@ interface GuidedJourneyProps {
   readonly onMyAgent: () => void;
   readonly onEvidence: () => void;
   readonly onEvidenceObserved: (entry: EvidenceActivityEntry) => void;
+  readonly onEncryptedBackupReady: (identity: LocalIdentitySession, encryptedBackup: string) => void;
 }
 
 const progressGroups: readonly { label: string; steps: readonly JourneyStep[] }[] = [
@@ -44,7 +45,7 @@ function downloadBackup(content: string): void {
 
 function shortDid(did: string): string { return `${did.slice(0, 20)}…${did.slice(-8)}`; }
 
-export function GuidedJourney({ identity, profile, onIdentityChange, onProfileChange, onBack, onRestore, onImportExisting, reservations, attempts, onRooms, onMyAgent, onEvidence, onEvidenceObserved }: GuidedJourneyProps) {
+export function GuidedJourney({ identity, profile, onIdentityChange, onProfileChange, onBack, onRestore, onImportExisting, reservations, attempts, onRooms, onMyAgent, onEvidence, onEvidenceObserved, onEncryptedBackupReady }: GuidedJourneyProps) {
   const initialFacts = { identityPresent: Boolean(identity && !identity.isLocked), backupCreated: identity?.backupVerificationStatus === "VERIFIED", backupVerified: identity?.backupVerificationStatus === "VERIFIED", profile };
   const [step, setStep] = useState<JourneyStep>(() => earliestIncompleteRequiredStep(initialFacts));
   const [backupCreated, setBackupCreated] = useState(identity?.backupVerificationStatus === "VERIFIED");
@@ -94,7 +95,7 @@ export function GuidedJourney({ identity, profile, onIdentityChange, onProfileCh
   async function createBackup(): Promise<void> {
     if (!active) return;
     setBusy(true); setError(undefined);
-    try { setBackupContent(await active.createEncryptedBackup(backupPassword)); setBackupPassword(""); setBackupCreated(true); }
+    try { const content = await active.createEncryptedBackup(backupPassword); setBackupContent(content); onEncryptedBackupReady(active, content); setBackupPassword(""); setBackupCreated(true); }
     catch (cause) { setError(cause instanceof Error ? cause.message : "The encrypted backup could not be created."); }
     finally { setBusy(false); }
   }
@@ -105,7 +106,7 @@ export function GuidedJourney({ identity, profile, onIdentityChange, onProfileCh
     try {
       const restored = await importEncryptedIdentity(await backupFile.text(), verifyPassword);
       if (restored.publicIdentity.did !== active.publicIdentity.did) { restored.lock(); throw new Error("This backup restores a different Public DID."); }
-      active.lock(); onIdentityChange(restored); setVerifyPassword(""); setStep("PERSONALIZE");
+      active.lock(); onIdentityChange(restored); if (backupContent) onEncryptedBackupReady(restored, backupContent); setVerifyPassword(""); setStep("PERSONALIZE");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Backup verification failed."); }
     finally { setBusy(false); }
   }
@@ -164,6 +165,6 @@ export function GuidedJourney({ identity, profile, onIdentityChange, onProfileCh
       {step === "VERIFY_MESSAGE" && prepared && <section aria-labelledby="journey-verify-message"><div className="eyebrow">Step 6 · Read Back + Verify</div><h2 id="journey-verify-message">Check your signed message</h2><p>{publishResult?.state==="OUTCOME_UNKNOWN"?"We couldn't confirm what happened yet. Do not automatically send again.":"The publish request received a response. Publication is not verified yet."}</p>{readback?.state==="NOT_OBSERVED"&&<div className="outcome-note" role="status">Not observed yet.</div>}{readback?.state==="READBACK_UNAVAILABLE"&&<div className="operational-error" role="alert">Unable to check publication.</div>}{readback?.state==="OBSERVED_BUT_NOT_VERIFIED"&&<div className="warning" role="status">Observed evidence did not produce a VALID verification result.</div>}<button className="primary" type="button" disabled={busy} onClick={()=>void checkMessage()}>{busy?"Checking…":"Check publication"}</button></section>}
       {step === "CARD" && readback?.state === "PUBLISHED_AND_VERIFIED" && <section aria-labelledby="journey-card"><div className="eyebrow">First signed message complete</div><h2 id="journey-card">Create your Agent Card</h2><ul><li>Published ✓</li><li>Observed on Technocore ✓</li><li>Signature verified ✓</li></ul><dl className="review-summary"><dt>Room</dt><dd>#lobby</dd><dt>Record</dt><dd>#{readback.observed.sequence ?? "Not provided"}</dd><dt>Public DID</dt><dd className="mono">{shortDid(prepared.did)}</dd></dl><p>Build a public image from this verified record evidence. Display Name is self-declared.</p><button className="primary" type="button" onClick={createCard}>Create Agent Card</button></section>}
     </div>
-    <p className="journey-session-note">Progress and profile details are held only in the current Workbench memory. Refresh or Lock may require restoring your Agent; this does not mean it was deleted.</p>
+    <p className="journey-session-note">After an encrypted backup is created, this browser can retain the encrypted Agent and safe public context. A fresh load is always locked; unlock locally with your Backup Password.</p>
   </section>;
 }

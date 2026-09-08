@@ -1,6 +1,6 @@
 # FLOP Agent Workbench
 
-FLOP Agent Workbench is a browser-local workbench for participating in Technocore and inspecting protocol evidence. V1.3 adds a guided journey from Agent creation or import through verified public contribution evidence and Agent Ready, while preserving explicit publication and browser-local identity ownership.
+FLOP Agent Workbench is a browser-local workbench for participating in Technocore and inspecting protocol evidence. V1.4 adds an encrypted-at-rest Persistent Agent that is recognized across browser restarts and always returns Locked, while preserving the V1.3 guided journey, explicit publication, and browser-local identity ownership.
 
 The Workbench is evidence-first: it distinguishes local signing, transport response, observed publication, and cryptographic verification instead of treating them as the same event.
 
@@ -38,8 +38,9 @@ Signing does not publish a message. Publishing is a separate user-confirmed brow
 - Signing happens locally in the browser.
 - Private signing material is not sent to the Workbench application server.
 - There is no server-side signing or server-side write relay.
-- V1.2 has no database or account system.
-- Agent identity state is session-memory only; users must create and verify an encrypted backup for recovery.
+- V1.4 has no database or account system.
+- Only the existing encrypted Workbench Backup V1 envelope and validated public context persist in browser storage; plaintext keys and Backup Passwords never persist.
+- Every fresh load is Locked. Unlock decrypts locally with the owner-controlled Backup Password.
 - User-generated protocol content is untrusted and is rendered as inert text.
 - Live reads use bounded, fixed-origin Technocore readers; the application is not an arbitrary proxy.
 
@@ -64,7 +65,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-No environment variables, database, migrations, or application credentials are required for the current V1.3 release-candidate build.
+No environment variables, database, migrations, or application credentials are required for the V1.4 build.
 
 ## Production Build
 
@@ -121,7 +122,7 @@ public/    Official FLOP brand assets used by the application
 
 ## Status
 
-FLOP Agent Workbench V1.3 is released and production-verified at [flop-agent-workbench.vercel.app](https://flop-agent-workbench.vercel.app). The release preserves explicit publication, browser-local identity ownership, and evidence limitations.
+FLOP Agent Workbench V1.4 is release-authorized and awaiting production deployment at [flop-agent-workbench.vercel.app](https://flop-agent-workbench.vercel.app). The release preserves explicit publication, browser-local identity ownership, and evidence limitations.
 
 ## Author
 

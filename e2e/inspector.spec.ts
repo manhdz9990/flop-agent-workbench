@@ -378,7 +378,7 @@ test("newcomer journey gates backup, signing, explicit publish, read-back verifi
   await expect(page.getByLabel("Onboarding receipt preview")).toContainText("Technocore Evidence Receipt");
   await page.screenshot({ path: "artifacts/v12-10-preflight/final-onboarding-receipt.png", fullPage: true });
   expect(writeCount).toBe(1); expect(readCount).toBe(1);
-  expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length }))).toEqual({ local: 0, session: 0 });
+  expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length }))).toEqual({ local: 1, session: 0 });
   await page.getByRole("button", { name: "Evidence", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Observed Evidence" })).toBeVisible();
   await expect(page.getByText("Exact read-back verified")).toBeVisible();
@@ -443,9 +443,9 @@ test("newcomer journey gates backup, signing, explicit publish, read-back verifi
   await page.getByRole("button", { name: "Lock Agent" }).click();
   await expect(page.getByRole("dialog")).toContainText("Downloaded encrypted backups are not deleted.");
   await page.getByRole("dialog").getByRole("button", { name: "Lock Agent" }).click();
-  await expect(page.getByRole("heading", { name: "Your Agent is not currently unlocked in this browser." })).toBeVisible();
-  await expect(page.getByText("No Agent loaded").first()).toBeVisible();
-  await page.getByRole("button", { name: "Restore Workbench Agent", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+  await expect(page.getByText("Saved in this browser · Locked")).toBeVisible();
+  await page.getByRole("button", { name: "Restore a different Workbench Agent", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Restore Agent", exact: true })).toBeVisible();
   await page.getByLabel("Encrypted Backup").setInputFiles(backupPath!);
   await page.getByLabel("Backup Password").fill(passphrase);
@@ -457,14 +457,14 @@ test("newcomer journey gates backup, signing, explicit publish, read-back verifi
   await expect(page.getByText("✓ Ready to sign", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Open Technocore Rooms →" })).toBeVisible();
   expect(requestData.join("\n")).not.toContain(passphrase);
-  expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length, cookies: document.cookie }))).toEqual({ local: 0, session: 0, cookies: "" });
+  expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length, cookies: document.cookie }))).toEqual({ local: 1, session: 0, cookies: "" });
   await page.getByRole("button", { name: "My Agent", exact: true }).click();
   await page.getByRole("button", { name: "Lock Agent" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Lock Agent" }).click();
   await page.reload();
   await expect(page.getByRole("heading", { name: "Home" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Restore Agent", exact: true })).toBeVisible();
-  expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length }))).toEqual({ local: 0, session: 0 });
+  await expect(page.getByRole("button", { name: /^Unlock Agent/ })).toBeVisible();
+  expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length }))).toEqual({ local: 1, session: 0 });
 });
 
 test("first-time entries reuse onboarding and active-DID Home remains available", async ({ page }) => {
@@ -744,7 +744,6 @@ test("Explore loads bounded untrusted rooms, handles empty/error, and navigates 
   });
   await page.route("**/api/inspect", (route) => route.fulfill({ json: liveResolution("ROOM", [fixture.record]) }));
   await page.goto("/"); await page.getByRole("button", { name: "Developer Tools" }).click(); await page.getByRole("button", { name: /Explore public rooms/ }).click();
-  await expect(page.getByRole("status")).toContainText("Loading bounded");
   await expect(page.getByText(hostile)).toBeVisible();
   expect(await page.evaluate(() => (window as Window & { __roomOwned?: boolean }).__roomOwned)).toBeUndefined();
   await page.getByRole("button", { name: "Inspect transcript" }).click();

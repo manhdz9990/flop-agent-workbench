@@ -72,14 +72,15 @@ describe("V12-08C runtime evidence model", () => {
     expect(addObservedEvidence(once, undefined)).toBe(once);
   });
 
-  it("keeps Evidence presentation runtime-only, non-secret, and adapter-based", () => {
+  it("keeps Evidence presentation non-secret and adapter-based with approved persistence", () => {
     const ui = readFileSync(new URL("../../app/evidence.tsx", import.meta.url), "utf8");
     const page = readFileSync(new URL("../../app/page.tsx", import.meta.url), "utf8");
     const sources = `${ui}\n${page}`;
     expect(ui).toContain("not durable account history");
     expect(ui).toMatch(/serializeEvidenceReceiptMarkdown|onInspectMessage/);
     expect(page).toMatch(/useState<readonly EvidenceActivityEntry\[\]>/);
-    expect(sources).not.toMatch(/localStorage|sessionStorage|indexedDB|document\.cookie|dangerouslySetInnerHTML|setInterval|WebSocket|EventSource/);
+    expect(page).toContain("savePersistentAgent");
+    expect(sources).not.toMatch(/sessionStorage|indexedDB|document\.cookie|dangerouslySetInnerHTML|setInterval|WebSocket|EventSource/);
     expect(sources).not.toMatch(/identity\.(?:seed|privateKey|passphrase|ciphertext)/);
   });
 });

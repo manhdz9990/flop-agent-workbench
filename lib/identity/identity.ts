@@ -42,8 +42,8 @@ class SessionIdentity implements LocalIdentitySession {
   readonly backupVerificationStatus: BackupVerificationStatus;
   #seed: Uint8Array | null;
 
-  constructor(seed: Uint8Array, publicIdentity: PublicIdentity, status: BackupVerificationStatus) {
-    this.#seed = seed.slice();
+  constructor(seed: Uint8Array | null, publicIdentity: PublicIdentity, status: BackupVerificationStatus) {
+    this.#seed = seed?.slice() ?? null;
     this.publicIdentity = publicIdentity;
     this.backupVerificationStatus = status;
   }
@@ -112,6 +112,10 @@ class SessionIdentity implements LocalIdentitySession {
     this.#seed?.fill(0);
     this.#seed = null;
   }
+}
+
+export function createLockedIdentity(publicIdentity: PublicIdentity, status: BackupVerificationStatus = "VERIFIED"): LocalIdentitySession {
+  return new SessionIdentity(null, Object.freeze({ ...publicIdentity }), status);
 }
 
 function cryptoRandomSeed(): Uint8Array {

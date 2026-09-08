@@ -10,7 +10,7 @@ const api = ["inspect", "rooms"].map((name) => readFileSync(new URL(`../../app/a
 
 describe("V12-08B and V12-09 Phase 4 My Agent integration", () => {
   it("presents truthful no-active and active public identity states", () => {
-    for (const copy of ["Agent not loaded", "Your Agent is not currently unlocked in this browser.", "Restore Workbench Agent", "Import Existing Agent", "Create New Agent", "Public DID", "Active only in this browser session", "Backup verification", "Signing readiness", "Lock Agent"]) expect(component).toContain(copy);
+    for (const copy of ["Agent not loaded", "Your Agent is not currently unlocked in this browser.", "Restore Workbench Agent", "Import Existing Agent", "Create New Agent", "Public DID", "Unlocked for this browser session", "Backup verification", "Signing readiness", "Lock Agent", "Welcome back", "Remove Agent from this browser"]) expect(component).toContain(copy);
     expect(component).toContain("identity.publicIdentity.did");
     expect(component).toContain('identity.backupVerificationStatus === "VERIFIED"');
     expect(component).not.toMatch(/identity\.(?:seed|privateKey|passphrase|ciphertext)/);
@@ -25,8 +25,7 @@ describe("V12-08B and V12-09 Phase 4 My Agent integration", () => {
     expect(onboarding).toContain("Backup decrypted locally");
     expect(onboarding).toContain("DID matched");
     expect(onboarding).toContain("Open Technocore Rooms →");
-    expect(onboarding).toContain("importEncryptedIdentity(await backupFile.text(), verifyPassphrase)");
-    expect(onboarding).not.toMatch(/localStorage|sessionStorage|indexedDB|document\.cookie/);
+    expect(onboarding).toContain("importEncryptedIdentity(content, verifyPassphrase)");
   });
 
   it("reuses existing onboarding and DID Inspector paths from the single Home-owned session", () => {
@@ -34,7 +33,7 @@ describe("V12-08B and V12-09 Phase 4 My Agent integration", () => {
     expect(page).toContain('<RoomsChat identity={activeIdentity}');
     expect(page).toContain('onCreateOrImport={() => openOnboarding("CREATE")}');
     expect(page).toContain('onSecureBackup={() => openOnboarding("MANAGE")}');
-    expect(page).toContain('<OnboardingFlow key={onboardingGeneration} entry={onboardingEntry} identity={activeIdentity}');
+    expect(page).toContain('<OnboardingFlow key={onboardingGeneration} entry={onboardingEntry} identity={onboardingEntry === "IMPORT" && activeIdentity?.isLocked ? undefined : activeIdentity}');
     expect(page).toMatch(/onCreate=\{\(\) => openOnboarding\("CREATE"\)\}/);
     expect(page).toMatch(/onImport=\{\(\) => openOnboarding\("IMPORT"\)\}/);
     expect(page).toMatch(/onBackup=\{\(\) => openOnboarding\("MANAGE"\)\}/);
@@ -44,7 +43,7 @@ describe("V12-08B and V12-09 Phase 4 My Agent integration", () => {
   });
 
   it("locks the existing session before clearing the authoritative Home holder", () => {
-    expect(component).toMatch(/identity\.lock\(\);\s*onIdentityChange\(undefined\)/);
+    expect(component).toMatch(/hideSecret\(\);\s*onLock\(\)/);
     expect(component).toContain("Lock this Agent?");
     expect(component).toContain("Downloaded encrypted backups are not deleted.");
     expect(component).toContain("setConfirmLock(true)");
@@ -67,12 +66,12 @@ describe("V12-08B and V12-09 Phase 4 My Agent integration", () => {
     expect(component).toMatch(/secretRevealed\) return/);
     expect(component).toContain("Hide Secret Key");
     expect(component).toContain("Copy Secret Key");
-    expect(component).toMatch(/hideSecret\(\);\s*identity\.lock\(\)/);
+    expect(component).toMatch(/hideSecret\(\);\s*onLock\(\)/);
   });
 
-  it("introduces no persistence, server identity route, or alternate domain engine", () => {
-    const integration = `${component}\n${page}`;
-    expect(integration).not.toMatch(/localStorage|sessionStorage|indexedDB|document\.cookie/);
+  it("keeps persistence browser-local with no server identity route or alternate domain engine", () => {
+    expect(page).toContain("window.localStorage");
+    expect(page).not.toMatch(/sessionStorage|indexedDB|document\.cookie/);
     expect(component).not.toMatch(/fetch\s*\(|prepareSignedMessage|publishPreparedMessage|verifyPublishedReadback/);
     expect(api).not.toMatch(/lib\/identity|LocalIdentitySession|generateLocalIdentity|importEncryptedIdentity/);
   });

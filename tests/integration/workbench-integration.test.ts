@@ -86,9 +86,10 @@ describe("V12-09R Workbench integration boundaries", () => {
     expect(page).not.toMatch(/Total Contacts|Active Deals|Revenue Overview|Conversion Rate|Recent Contacts|pricing|testimonial/i);
   });
 
-  it("adds no persistence, polling, content-derived fetch, or server write relay", () => {
+  it("adds only approved encrypted local persistence and no content-derived fetch or server write relay", () => {
     const integration = `${page}\n${onboarding}`;
-    expect(integration).not.toMatch(/localStorage|sessionStorage|indexedDB|document\.cookie|setInterval|dangerouslySetInnerHTML|say-signed|fetch\s*\(.*(?:text|topic|message)/);
+    expect(integration).toContain("window.localStorage");
+    expect(integration).not.toMatch(/sessionStorage|indexedDB|document\.cookie|setInterval|dangerouslySetInnerHTML|say-signed|fetch\s*\(.*(?:text|topic|message)/);
     expect(api).not.toMatch(/publishPreparedMessage|say-signed|lib\/publish|lib\/signing|lib\/identity/);
   });
 });

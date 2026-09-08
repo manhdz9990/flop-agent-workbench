@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- exact 39 KB official artwork is served unchanged from /public */
 
-import { useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { buildDidVerificationPipeline, buildTranscriptVerificationPipeline, diagnoseExportTranscript, diagnoseLiveTranscript, type TranscriptDiagnostics, type VerificationPipeline } from "../lib/diagnostics";
 import type { EvidenceField, MessageEvidence, OperationalError } from "../lib/domain";
 import { DEFAULT_EXPORT_LIMITS } from "../lib/export";
@@ -9,7 +9,7 @@ import type { InputResolution } from "../lib/input";
 import type { ReadResult, RoomObservation, RoomReadPayload, RoomsDiscoveryPayload } from "../lib/live";
 import type { ProtocolRecord } from "../lib/protocol";
 import { createEvidenceReceipt, createReceiptDownload, downloadReceiptLocally, serializeEvidenceReceiptJson, serializeEvidenceReceiptMarkdown, type EvidenceReceiptFormat } from "../lib/receipt";
-import type { LocalIdentitySession } from "../lib/identity";
+import { createLockedIdentity, importEncryptedIdentity, type LocalIdentitySession } from "../lib/identity";
 import { OnboardingFlow, type OnboardingEntry } from "./onboarding";
 import { GuidedJourney } from "./guided-journey";
 import { IdentityImport } from "./identity-import";
@@ -21,6 +21,7 @@ import { addObservedEvidence, type EvidenceActivityEntry } from "../lib/evidence
 import { PublishAttemptSession } from "../lib/publish";
 import { SessionNonceReservations } from "../lib/signing";
 import { TechnicalEvidence, VerificationOverview, VerificationStages } from "./verification-result";
+import { loadPersistentAgent, PERSISTENT_AGENT_SCHEMA, removePersistentAgent, savePersistentAgent, type PersistentAgentRecord } from "../lib/persistent-agent";
 
 type Task = "EXPLORE" | "MESSAGE" | "EXPORT" | "DID";
 type Screen = "START" | "JOURNEY" | "IMPORT_IDENTITY" | "ONBOARD" | "MY_AGENT" | "EVIDENCE" | "ROOMS" | "DEVTOOLS" | "EXPLORE" | "INPUT" | "TRANSCRIPT" | "PIPELINE";
@@ -47,11 +48,40 @@ export default function Home() {
   const [agentProfile, setAgentProfile] = useState<AgentProfile>();
   const [onboardingStarted, setOnboardingStarted] = useState(false); const [onboardingGeneration, setOnboardingGeneration] = useState(0); const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [observedEvidence, setObservedEvidence] = useState<readonly EvidenceActivityEntry[]>([]);
+  const [persistedAgent, setPersistedAgent] = useState<PersistentAgentRecord>();
+  const [persistenceError, setPersistenceError] = useState<string>();
   const publishLifecycle = useRef<{ reservations: SessionNonceReservations; attempts: PublishAttemptSession }>(undefined);
   if (publishLifecycle.current === undefined) {
     const reservations = new SessionNonceReservations();
     publishLifecycle.current = { reservations, attempts: new PublishAttemptSession(reservations) };
   }
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        const saved = loadPersistentAgent(window.localStorage);
+        if (saved) { setPersistedAgent(saved); setActiveIdentity(createLockedIdentity(saved.publicIdentity, saved.backupVerificationStatus)); setAgentProfile(saved.profile); setObservedEvidence(saved.evidence); }
+      } catch { setPersistenceError("Saved Agent data is invalid or unavailable. Restore from your encrypted backup to continue safely."); }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  function persistAgent(identity: LocalIdentitySession, encryptedBackup: string): void {
+    const next: PersistentAgentRecord = { schema: PERSISTENT_AGENT_SCHEMA, encryptedBackup, publicIdentity: identity.publicIdentity, backupVerificationStatus: identity.backupVerificationStatus, ...(agentProfile ? { profile: agentProfile } : {}), evidence: observedEvidence.filter((entry) => entry.writer === identity.publicIdentity.did) };
+    try { savePersistentAgent(window.localStorage, next); setPersistedAgent(next); setPersistenceError(undefined); }
+    catch { setPersistenceError("This browser could not save the encrypted Agent. Keep your downloaded backup safe."); }
+  }
+  function changeProfile(profile: AgentProfile): void {
+    setAgentProfile(profile);
+    if (persistedAgent) { const next = { ...persistedAgent, profile }; try { savePersistentAgent(window.localStorage, next); setPersistedAgent(next); } catch { setPersistenceError("Profile changes could not be saved in this browser."); } }
+  }
+  async function unlockAgent(password: string): Promise<void> {
+    if (!persistedAgent) throw new Error("No saved Agent is available in this browser.");
+    const unlocked = await importEncryptedIdentity(persistedAgent.encryptedBackup, password);
+    if (unlocked.publicIdentity.did !== persistedAgent.publicIdentity.did || unlocked.publicIdentity.publicKey !== persistedAgent.publicIdentity.publicKey) { unlocked.lock(); throw new Error("Saved Agent identity validation failed."); }
+    const next = { ...persistedAgent, backupVerificationStatus: "VERIFIED" as const }; savePersistentAgent(window.localStorage, next); setPersistedAgent(next); activeIdentity?.lock(); setActiveIdentity(unlocked);
+  }
+  function lockAgent(): void { activeIdentity?.lock(); if (persistedAgent) setActiveIdentity(createLockedIdentity(persistedAgent.publicIdentity, persistedAgent.backupVerificationStatus)); else setActiveIdentity(undefined); }
+  function removeAgent(): void { try { removePersistentAgent(window.localStorage); activeIdentity?.lock(); setPersistedAgent(undefined); setActiveIdentity(undefined); setAgentProfile(undefined); setObservedEvidence([]); setOnboardingStarted(false); setPersistenceError(undefined); setScreen("MY_AGENT"); } catch { setPersistenceError("This browser could not remove the saved Agent. No in-memory identity was cleared."); } }
 
   function start(next: Task) { setTask(next); setError(undefined); setAnalysis(undefined); if (next === "EXPLORE") { setScreen("EXPLORE"); if (rooms === undefined) void discoverRooms(); } else setScreen("INPUT"); }
   function goStart() { setScreen("START"); setError(undefined); }
@@ -62,7 +92,7 @@ export default function Home() {
   function openMyAgent() { setError(undefined); setScreen("MY_AGENT"); }
   function openEvidence() { setError(undefined); setScreen("EVIDENCE"); }
   function openDevTools() { setError(undefined); setScreen("DEVTOOLS"); }
-  function recordEvidence(entry: EvidenceActivityEntry) { setObservedEvidence((current) => addObservedEvidence(current, entry)); }
+  function recordEvidence(entry: EvidenceActivityEntry) { setObservedEvidence((current) => { const next = addObservedEvidence(current, entry); if (persistedAgent && entry.writer === persistedAgent.publicIdentity.did) { const saved = { ...persistedAgent, evidence: next.filter((item) => item.writer === persistedAgent.publicIdentity.did) }; try { savePersistentAgent(window.localStorage, saved); setPersistedAgent(saved); } catch { setPersistenceError("Evidence could not be saved in this browser."); } } return next; }); }
   function openDidInspector(publicDid: string) { setDid(publicDid); setTask("DID"); setScreen("INPUT"); setError(undefined); }
   function openMessageDebugger(roomName: string, messageSequence: string) { setRoom(roomName); setSequence(messageSequence); setTask("MESSAGE"); setScreen("INPUT"); setError(undefined); }
   async function discoverRooms() { setBusy(true); setError(undefined); try { const response = await fetch("/api/rooms"); const result = await response.json() as ReadResult<RoomsDiscoveryPayload>; if (!result.ok) throw result.error; setRooms(result.value.observations); } catch (cause) { setError(asOperationalError(cause, "ROOM_DISCOVERY_FAILED")); } finally { setBusy(false); } }
@@ -79,14 +109,14 @@ export default function Home() {
     else if (task === "DID") { const cleanDid = did.trim(); const pipeline = buildDidVerificationPipeline(cleanDid); setAnalysis({ task, identity: cleanDid, did: cleanDid, pipeline }); setScreen("PIPELINE"); }
   } catch (cause) { setError(asOperationalError(cause, "INSPECTION_FAILED")); } finally { setBusy(false); } }
 
-  const activeSession = activeIdentity && !activeIdentity.isLocked ? activeIdentity : undefined;
-  return <main className={`workbench-app${sidebarCollapsed ? " sidebar-collapsed" : ""}`}><Header screen={screen} onStart={goStart} onRooms={openRooms} onAgent={openMyAgent} onEvidence={openEvidence} onDevTools={openDevTools} identity={activeSession} collapsed={sidebarCollapsed} onCollapse={() => setSidebarCollapsed((value) => !value)} />
+  return <main className={`workbench-app${sidebarCollapsed ? " sidebar-collapsed" : ""}`}><Header screen={screen} onStart={goStart} onRooms={openRooms} onAgent={openMyAgent} onEvidence={openEvidence} onDevTools={openDevTools} identity={activeIdentity} collapsed={sidebarCollapsed} onCollapse={() => setSidebarCollapsed((value) => !value)} />
     <div className="workbench-workspace">
-    {screen === "START" && <StartScreen activeIdentity={activeIdentity && !activeIdentity.isLocked ? activeIdentity : undefined} profile={agentProfile} evidence={observedEvidence} onChoose={start} onJourney={openJourney} onOnboard={openOnboarding} onRooms={openRooms} onAgent={openMyAgent} onEvidence={openEvidence} onDevTools={openDevTools} />}
-    {screen === "JOURNEY" && <GuidedJourney identity={activeIdentity} profile={agentProfile} reservations={publishLifecycle.current.reservations} attempts={publishLifecycle.current.attempts} onIdentityChange={setActiveIdentity} onProfileChange={setAgentProfile} onBack={goStart} onRestore={() => openOnboarding("IMPORT")} onImportExisting={openIdentityImport} onRooms={openRooms} onMyAgent={openMyAgent} onEvidence={openEvidence} onEvidenceObserved={recordEvidence} />}
+    {persistenceError && <div className="persistence-notice" role="alert">{persistenceError}</div>}
+    {screen === "START" && <StartScreen activeIdentity={activeIdentity} profile={agentProfile} evidence={observedEvidence} onChoose={start} onJourney={activeIdentity?.isLocked ? openMyAgent : openJourney} onOnboard={openOnboarding} onRooms={openRooms} onAgent={openMyAgent} onEvidence={openEvidence} onDevTools={openDevTools} />}
+    {screen === "JOURNEY" && <GuidedJourney identity={activeIdentity} profile={agentProfile} reservations={publishLifecycle.current.reservations} attempts={publishLifecycle.current.attempts} onIdentityChange={setActiveIdentity} onProfileChange={changeProfile} onEncryptedBackupReady={persistAgent} onBack={goStart} onRestore={() => openOnboarding("IMPORT")} onImportExisting={openIdentityImport} onRooms={openRooms} onMyAgent={openMyAgent} onEvidence={openEvidence} onEvidenceObserved={recordEvidence} />}
     {screen === "IMPORT_IDENTITY" && <IdentityImport onBack={openJourney} onRestoreWorkbench={() => openOnboarding("IMPORT")} onConfirm={(identity) => { setActiveIdentity(identity); setScreen("JOURNEY"); }} />}
-    {onboardingStarted && <div className="onboarding-host" hidden={screen !== "ONBOARD"}><OnboardingFlow key={onboardingGeneration} entry={onboardingEntry} identity={activeIdentity} reservations={publishLifecycle.current.reservations} attempts={publishLifecycle.current.attempts} onIdentityChange={setActiveIdentity} onBack={goStart} onInspectDid={openDidInspector} onDebugMessage={openMessageDebugger} onEvidenceObserved={recordEvidence} onMyAgent={openMyAgent} onExploreRooms={onboardingEntry === "IMPORT" ? openJourney : () => start("EXPLORE")} /></div>}
-    {screen === "MY_AGENT" && <MyAgent identity={activeIdentity} onBack={goStart} onCreate={() => openOnboarding("CREATE")} onImport={() => openOnboarding("IMPORT")} onImportExisting={openIdentityImport} onBackup={() => openOnboarding("MANAGE")} onRooms={openRooms} onInspectDid={openDidInspector} onIdentityChange={setActiveIdentity} />}
+    {onboardingStarted && <div className="onboarding-host" hidden={screen !== "ONBOARD"}><OnboardingFlow key={onboardingGeneration} entry={onboardingEntry} identity={onboardingEntry === "IMPORT" && activeIdentity?.isLocked ? undefined : activeIdentity} reservations={publishLifecycle.current.reservations} attempts={publishLifecycle.current.attempts} onIdentityChange={setActiveIdentity} onEncryptedBackupReady={persistAgent} onBack={goStart} onInspectDid={openDidInspector} onDebugMessage={openMessageDebugger} onEvidenceObserved={recordEvidence} onMyAgent={openMyAgent} onExploreRooms={onboardingEntry === "IMPORT" ? openJourney : () => start("EXPLORE")} /></div>}
+    {screen === "MY_AGENT" && <MyAgent identity={activeIdentity} hasSavedAgent={persistedAgent !== undefined} onUnlock={unlockAgent} onRemove={removeAgent} onLock={lockAgent} onBack={goStart} onCreate={() => openOnboarding("CREATE")} onImport={() => openOnboarding("IMPORT")} onImportExisting={openIdentityImport} onBackup={() => openOnboarding("MANAGE")} onRooms={openRooms} onInspectDid={openDidInspector} onIdentityChange={setActiveIdentity} />}
     {screen === "EVIDENCE" && <EvidenceWorkspace entries={observedEvidence} activeDid={activeIdentity && !activeIdentity.isLocked ? activeIdentity.publicIdentity.did : undefined} onBack={goStart} onRooms={() => openRooms()} onInspectMessage={openMessageDebugger} />}
     {screen === "ROOMS" && <RoomsChat identity={activeIdentity} reservations={publishLifecycle.current.reservations} attempts={publishLifecycle.current.attempts} onBack={goStart} onCreateOrImport={() => openOnboarding("CREATE")} onSecureBackup={() => openOnboarding("MANAGE")} onInspectMessage={openMessageDebugger} onEvidenceObserved={recordEvidence} />}
     {screen === "DEVTOOLS" && <section className="flow-page app-tools-workspace" aria-labelledby="inspect-debug-title"><div className="eyebrow">Workbench Utilities</div><h1>Developer Tools</h1><DeveloperTools onChoose={start} label="TOOLS" /></section>}
@@ -117,7 +147,7 @@ function WorkbenchIcon({ name }: { name: WorkbenchIconName }) {
 
 function Header({ screen, onStart, onRooms, onAgent, onEvidence, onDevTools, identity, collapsed, onCollapse }: { screen: Screen; onStart(): void; onRooms(): void; onAgent(): void; onEvidence(): void; onDevTools(): void; identity?: LocalIdentitySession; collapsed: boolean; onCollapse(): void }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const did = identity && !identity.isLocked ? identity.publicIdentity.did : undefined;
+  const did = identity?.publicIdentity.did;
   const shortDid = did ? `${did.slice(8, 12)}…${did.slice(-4)}` : undefined;
   const current = screen === "ROOMS" || screen === "EXPLORE" ? "rooms" : screen === "MY_AGENT" || screen === "ONBOARD" || screen === "JOURNEY" || screen === "IMPORT_IDENTITY" ? "agent" : screen === "EVIDENCE" ? "evidence" : screen === "DEVTOOLS" || screen === "INPUT" || screen === "TRANSCRIPT" || screen === "PIPELINE" ? "tools" : "home";
   const workspaceTitle = current === "rooms" ? "Rooms" : current === "agent" ? (screen === "ONBOARD" || screen === "JOURNEY" || screen === "IMPORT_IDENTITY" ? "My Agent / Setup" : "My Agent") : current === "evidence" ? "Evidence" : current === "tools" ? "Developer Tools" : "Home";
@@ -133,10 +163,12 @@ function Header({ screen, onStart, onRooms, onAgent, onEvidence, onDevTools, ide
 }
 interface StartScreenProps { activeIdentity?: LocalIdentitySession; profile?: AgentProfile; evidence: readonly EvidenceActivityEntry[]; onChoose(task: Task): void; onJourney(): void; onOnboard(entry: OnboardingEntry): void; onRooms(): void; onAgent(): void; onEvidence(): void; onDevTools(): void }
 function StartScreen(props: StartScreenProps) {
-  const identity = props.activeIdentity; const ready = identity?.backupVerificationStatus === "VERIFIED"; const evidenceAvailable = props.evidence.length > 0;
+  const identity = props.activeIdentity; const locked = identity?.isLocked === true; const ready = identity?.backupVerificationStatus === "VERIFIED"; const evidenceAvailable = props.evidence.length > 0;
   const verified = identity ? props.evidence.some((entry) => entry.source === "READBACK_VERIFIED" && entry.writer === identity.publicIdentity.did && entry.observationState === "PUBLISHED_AND_VERIFIED") : false;
   const next = !identity
     ? { title: "Create your Agent", copy: "Follow a guided setup for identity, recovery, and your agent profile.", label: "Create New Agent", run: props.onJourney, tone: "required" }
+    : locked
+      ? { title: "Welcome back", copy: "Your encrypted Agent is saved in this browser and locked. Unlock locally to sign.", label: "Unlock Agent →", run: props.onAgent, tone: "required" }
     : !ready
       ? { title: "Secure your backup", copy: "Verify an encrypted backup before signing.", label: "Secure Backup →", run: () => props.onOnboard("MANAGE"), tone: "required" }
       : !props.profile

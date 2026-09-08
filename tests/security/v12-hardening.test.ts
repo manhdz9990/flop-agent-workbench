@@ -26,9 +26,9 @@ describe("V12-07 cross-boundary hardening", () => {
     expect(implementation).toMatch(/searchParams\.set\("limit", "200"\)|messages\.length > 200/);
   });
 
-  it("contains no logging, secret persistence, unsafe HTML, or background polling", () => {
+  it("contains no logging, plaintext secret persistence, unsafe HTML, or background polling", () => {
     expect(implementation).not.toMatch(/console\.(?:log|error|debug|warn)\s*\(/);
-    expect(implementation).not.toMatch(/localStorage|sessionStorage|indexedDB|document\.cookie|setInterval|dangerouslySetInnerHTML/);
+    expect(implementation).not.toMatch(/sessionStorage|indexedDB|document\.cookie|setInterval|dangerouslySetInnerHTML/);
   });
 
   it("keeps identity/signing/publish capability out of application server routes", () => {

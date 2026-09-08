@@ -1,5 +1,17 @@
 # PROJECT_STATUS
 
+## V1.4 Persistent Agent — 2026-09-08
+
+**State: V1.4 RELEASE AUTHORIZED — FINAL RELEASE GATE IN PROGRESS.** One versioned, bounded browser-local boundary retains only Workbench Backup V1 ciphertext and validated public identity/profile/evidence. Fresh loads are Locked; unlock reuses authenticated local decryption and exact DID/public-key checks. Lock clears the runtime seed while retaining encrypted state. Confirmed removal clears browser-local and runtime context while public records remain external.
+
+No plaintext Secret Key, seed, Backup Password, nonce reservation, pending attempt, draft, server custody, API/dependency change, cloud sync, automated write, or X automation was introduced. Existing identity/signing/nonce/publish/read-back/Evidence owners remain authoritative. Product Owner manual acceptance passed the exact persisted → locked → unlock → refresh → lock → remove → same-DID restore flow. Release is explicitly authorized; production is not yet changed.
+
+Final local gate: typecheck PASS; 32/32 unit/integration files and 404/404 tests PASS; ESLint PASS with zero warnings; production build PASS with unchanged routes (`/`, `/api/inspect`, `/api/rooms`, framework `/_not-found`); Chromium E2E 24/24 PASS; offline npm audit PASS with 0 vulnerabilities. Known limitations: persistence is device/browser-origin local and has no cloud recovery; browser storage compromise can copy ciphertext/public context; compromise while unlocked can access runtime signing; clearing site data removes the browser copy; the owner must retain the separate backup and password; X remains manual/unverified; Technocore retained observations remain bounded and non-durable.
+
+### Exact Next Action
+
+Product Owner manually reviews V1.4 Persistent Agent using `docs/04_quality/04_V14_MANUAL_ACCEPTANCE.md` and authorizes release preparation only after acceptance.
+
 ## Project
 FLOP Agent Workbench V1.3 — Guided Agent Journey & Contribution Evidence; V1.3 is released and production-verified.
 

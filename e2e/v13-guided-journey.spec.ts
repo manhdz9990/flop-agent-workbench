@@ -112,7 +112,7 @@ test("V13-05 completes public contribution evidence only after a second exact VA
   await page.getByRole("button",{name:"My Agent",exact:true}).click();await expect(page.getByRole("heading",{name:"My Agent",exact:true})).toBeVisible();
   await page.getByRole("button",{name:"Evidence",exact:true}).click();await expect(page.getByRole("heading",{name:"Observed Evidence",exact:true})).toBeVisible();
 
-  expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length }))).toEqual({ local: 0, session: 0 });
+  expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length }))).toEqual({ local: 1, session: 0 });
   expect(requests.filter((url) => url.includes("say-signed"))).toHaveLength(2);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(await page.evaluate(() => document.documentElement.clientWidth));
