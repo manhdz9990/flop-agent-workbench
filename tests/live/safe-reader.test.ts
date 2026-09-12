@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import { inspectDid, resolveInspectionInput } from "../../lib/input";
-import { buildRoomReadUrl, parseRoomReadJson, readRoom, type ReaderOptions } from "../../lib/live";
+import { buildRoomReadUrl, parseRoomReadJson, readRoom, validateRoomName, type ReaderOptions } from "../../lib/live";
 import type { ProtocolRecord } from "../../lib/protocol";
 
 interface Fixture { room: string; record: Required<ProtocolRecord> }
@@ -18,6 +18,16 @@ function roomJson(messages: readonly object[] = [], metadata: object = {}): stri
 }
 
 describe("allowlisted endpoint construction", () => {
+  it("accepts exact official room names through the canonical validator", () => {
+    expect(validateRoomName("room-name")).toBe("room-name");
+    expect(validateRoomName("mb-sonnet-2-registration")).toBe("mb-sonnet-2-registration");
+  });
+
+  it.each(["Room", " room", "room ", "https://technocore.chat/r/room", "room/path", "room?since=1", "", "a".repeat(49)])(
+    "rejects non-canonical exact room input %j",
+    (room) => expect(() => validateRoomName(room)).toThrow("official Technocore name grammar"),
+  );
+
   it("constructs only the approved newest-200 JSON room read", () => {
     expect(buildRoomReadUrl("mb-p-inbox").href).toBe("https://technocore.chat/r/mb-p-inbox?format=json&limit=200");
   });

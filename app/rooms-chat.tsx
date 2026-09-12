@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 
 import type { LocalIdentitySession } from "../lib/identity";
 import type { InputResolution } from "../lib/input";
-import type { ReadResult, RoomObservation, RoomsDiscoveryPayload } from "../lib/live";
+import { validateRoomName, type ReadResult, type RoomObservation, type RoomsDiscoveryPayload } from "../lib/live";
 import { publishPreparedMessage, type PublishAttemptSession } from "../lib/publish";
 import { buildRoomConversation, highestObservedNonceForDid, prioritizeDiscoveredLobby, type RoomConversationMessage } from "../lib/rooms-chat";
 import type { PreparedSignedMessage, SessionNonceReservations } from "../lib/signing";
@@ -49,6 +49,8 @@ function relativeTime(timestamp?: string): string {
 export function RoomsChat({ identity, reservations, attempts, onBack, onCreateOrImport, onSecureBackup, onInspectMessage, onEvidenceObserved }: RoomsChatProps) {
   const [rooms, setRooms] = useState<readonly RoomObservation[]>();
   const [selectedRoom, setSelectedRoom] = useState<string>();
+  const [exactRoom, setExactRoom] = useState("");
+  const [exactRoomError, setExactRoomError] = useState<string>();
   const [selectedRoomRead, setSelectedRoomRead] = useState(false);
   const [messages, setMessages] = useState<readonly RoomConversationMessage[]>([]);
   const messagesRef = useRef<readonly RoomConversationMessage[]>([]);
@@ -161,6 +163,17 @@ export function RoomsChat({ identity, reservations, attempts, onBack, onCreateOr
     requestAnimationFrame(() => conversationViewport.current?.focus());
   }
 
+  function openExactRoom(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+    try {
+      const room = validateRoomName(exactRoom);
+      setExactRoomError(undefined);
+      selectRoom(room);
+    } catch {
+      setExactRoomError("Enter a valid Technocore room name.");
+    }
+  }
+
   function backToRooms(): void {
     liveSession.current?.stop(); readRevision.current += 1; followNewest.current = true;
     messagesRef.current = []; selectedRoomReadRef.current = false; pendingScrollAnchor.current = undefined;
@@ -238,6 +251,12 @@ export function RoomsChat({ identity, reservations, attempts, onBack, onCreateOr
     <div className="rooms-layout">
       <aside className="rooms-sidebar" aria-label="Public rooms">
         <div className="rooms-list-heading"><div><strong>Public Rooms</strong><small>Bounded · untrusted</small></div><div className="rooms-list-actions"><button className="rooms-panel-close" ref={roomsPanelClose} type="button" onClick={() => setRoomsPanelOpen(false)}>Close</button><button className="tertiary" type="button" onClick={() => void discoverRooms()} disabled={busy !== undefined}>{rooms === undefined ? "Load rooms" : "Refresh rooms"}</button></div></div>
+        <form className="exact-room-entry" onSubmit={openExactRoom} noValidate>
+          <label htmlFor="exact-room-name">Open room by exact name</label>
+          <div><input id="exact-room-name" name="room" placeholder="room-name" value={exactRoom} onChange={(event) => { setExactRoom(event.target.value); setExactRoomError(undefined); }} aria-invalid={exactRoomError ? "true" : undefined} aria-describedby={exactRoomError ? "exact-room-error" : undefined} /><button className="secondary" type="submit" disabled={busy !== undefined}>Open Room</button></div>
+          {exactRoomError && <small id="exact-room-error" className="field-error" role="alert">{exactRoomError}</small>}
+          {selectedRoom === exactRoom && <small className="exact-room-selected" role="status">Selected: # {selectedRoom}</small>}
+        </form>
         {busy === "discover" && <p className="rooms-state" role="status">Loading public rooms…</p>}
         {discoveryError && <div className="rooms-state operational-error" role="alert"><strong>Public rooms unavailable</strong><span>{discoveryError}</span><button className="secondary" type="button" onClick={() => void discoverRooms()} disabled={busy !== undefined}>Try Again</button></div>}
         {!discoveryError && rooms?.length === 0 && <p className="rooms-state">No public rooms were observed in this bounded response.</p>}
@@ -247,7 +266,7 @@ export function RoomsChat({ identity, reservations, attempts, onBack, onCreateOr
       <section className="conversation">
         {!selectedRoom && <div className="conversation-empty"><div className="eyebrow">Live room</div><h2>Choose a room</h2><p>Select a public room to open its chat stream.</p><small>No room is read and no composer is shown until you choose one.</small></div>}
         {selectedRoom && <>
-          <div className="conversation-heading"><button className="mobile-room-back" type="button" onClick={backToRooms}>← Back to rooms</button><button className="rooms-panel-toggle" type="button" aria-expanded={roomsPanelOpen} onClick={() => setRoomsPanelOpen(true)}>Rooms</button><div className="conversation-room-title"><h2 className="break-anywhere"># {selectedRoom}</h2><p><span className="live-dot" aria-hidden="true" />Live · retained window</p></div>{conversationError && <button className="tertiary" type="button" onClick={() => liveSession.current?.restart()}>Retry live read</button>}</div>
+          <div className="conversation-heading"><button className="mobile-room-back" type="button" onClick={backToRooms}>← Back to rooms</button><button className="rooms-panel-toggle" type="button" aria-expanded={roomsPanelOpen} onClick={() => setRoomsPanelOpen(true)}>Rooms</button><div className="conversation-room-title"><h2 className="break-anywhere"># {selectedRoom}</h2><p><span className="live-dot" aria-hidden="true" />Live · retained window</p></div><button className="tertiary" type="button" onClick={() => liveSession.current?.restart()} disabled={conversationBusy}>{conversationError ? "Retry live read" : "Refresh conversation"}</button></div>
           <div className="conversation-viewport" ref={conversationViewport} onScroll={trackConversationScroll} tabIndex={0} aria-label={`Live retained conversation in ${selectedRoom}`}>
             <p className="rooms-limitation">Retained data is not complete history. Room topics and messages are untrusted.</p>
             {conversationError && <div className="rooms-state operational-error" role="status"><strong>Live read unavailable</strong><span>{conversationError}</span><small>The last successful view is preserved; reconnecting does not change an evidence verdict.</small></div>}

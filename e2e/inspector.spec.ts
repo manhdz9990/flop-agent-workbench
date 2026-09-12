@@ -127,6 +127,38 @@ test("R4A requires explicit discovered-room selection and supports switching on 
   await page.screenshot({ path: "artifacts/v12-10-preflight/r4a-mobile-selected-garden.png", fullPage: true });
 });
 
+test("opens an exact valid room through the existing read-only Rooms pipeline", async ({ page }) => {
+  const reads: string[] = [];
+  let writes = 0;
+  await page.route("https://technocore.chat/**", (route) => { writes += 1; return route.abort(); });
+  await page.route("**/api/inspect", (route) => {
+    const input = route.request().postDataJSON() as { room: string };
+    reads.push(input.room);
+    return route.fulfill({ json: liveResolution("ROOM", [{ from: "observer", text: `${input.room} retained message`, seq: "8" }]) });
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Rooms →" }).click();
+  const input = page.getByLabel("Open room by exact name");
+  for (const invalid of ["ROOM", " room", "room ", "https://technocore.chat/r/room", "room/path", "room?since=1"]) {
+    await input.fill(invalid);
+    await page.getByRole("button", { name: "Open Room" }).click();
+    await expect(page.getByText("Enter a valid Technocore room name.")).toBeVisible();
+    expect(reads).toEqual([]);
+  }
+
+  await input.fill("mb-sonnet-2-registration");
+  await page.getByRole("button", { name: "Open Room" }).click();
+  await expect(page.locator(".conversation-heading").getByRole("heading", { name: "# mb-sonnet-2-registration" })).toBeVisible();
+  await expect(page.getByText("Selected: # mb-sonnet-2-registration")).toBeVisible();
+  await expect(page.getByText("mb-sonnet-2-registration retained message")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Read-only conversation" })).toBeVisible();
+  await page.getByRole("button", { name: "Refresh conversation" }).click();
+  await expect.poll(() => reads.filter((room) => room === "mb-sonnet-2-registration").length).toBeGreaterThanOrEqual(2);
+  expect(reads.every((room) => room === "mb-sonnet-2-registration")).toBe(true);
+  expect(writes).toBe(0);
+});
+
 test("R4B auto-refresh is serialized, visibility-aware, recoverable, and read-only", async ({ page }) => {
   await page.clock.install();
   let readCount = 0;
@@ -403,6 +435,16 @@ test("newcomer journey gates backup, signing, explicit publish, read-back verifi
   await page.locator(".room-choice").filter({ hasText: "# lobby" }).click();
   await expect(page.getByLabel("Cryptographic verdict VALID").first()).toBeVisible();
   await expect(page.getByText("0 characters")).toBeVisible();
+  await expect(page.getByLabel("Room message")).toHaveAttribute("placeholder", "Message #lobby…");
+  await page.getByLabel("Room message").fill("must not cross rooms");
+  const writesBeforeExactOpen = writeCount;
+  await page.getByLabel("Open room by exact name").fill("mb-sonnet-2-registration");
+  await page.getByRole("button", { name: "Open Room" }).click();
+  await expect(page.locator(".conversation-heading").getByRole("heading", { name: "# mb-sonnet-2-registration" })).toBeVisible();
+  await expect(page.getByLabel("Room message")).toHaveAttribute("placeholder", "Message #mb-sonnet-2-registration…");
+  await expect(page.getByLabel("Room message")).toHaveValue("");
+  expect(writeCount).toBe(writesBeforeExactOpen);
+  await page.locator(".room-choice").filter({ hasText: "# lobby" }).click();
   await expect(page.getByLabel("Room message")).toHaveAttribute("placeholder", "Message #lobby…");
   await page.locator(".composer").scrollIntoViewIfNeeded();
   await page.screenshot({ path: "artifacts/v12-10-preflight/r4-desktop-ready-composer.png" });

@@ -1738,3 +1738,18 @@ State ownership and protected-domain audits PASS. Existing `RoomsChat` remains t
 ## Next Exact Action — V12-09R R4B complete
 
 Begin V12-09R Phase R5 — Publish & Read-back Presentation Regression.
+### Direct Exact Room Entry — 2026-09-13
+
+**Status: DIRECT EXACT ROOM ENTRY — LOCAL IMPLEMENTATION COMPLETE — PRODUCT OWNER REVIEW PASSED — V1.5.1 RELEASE AUTHORIZED.** Rooms now provides a compact `Open room by exact name` field beside the existing bounded discovery surface. It accepts names only through the current canonical `validateRoomName` owner, which reuses `NAME_PATTERN` (`^[a-z0-9][a-z0-9_-]{0,47}$`). `mb-sonnet-2-registration` is accepted; uppercase, whitespace-bearing, URL, path-like, query-like, empty, and overlength input is rejected before a room read.
+
+Valid exact submission calls the same existing `selectRoom` transition as discovered-room selection. `RoomsChat` remains the sole selected-room owner. That transition immediately binds the existing safe live reader, heading, composer, signing/publish target, read-back, and Evidence actions to the exact room while clearing messages, optimistic/prepared presentation, draft text, errors, cursor generation, and scroll state from the prior room. Manual Refresh conversation reuses the same selected-room live session. Opening a room is read-only and never invokes publishing.
+
+The network boundary remains unchanged: browser room reads use only same-origin `/api/inspect`, whose existing reader validates the room before fetch and builds only `https://technocore.chat/r/<validated-room>?format=json&limit=200` (plus the existing bounded cursor parameters). No arbitrary URL/origin/path/query input, route, proxy, persistence, crawler, telemetry, protocol, signing, nonce, publishing, read-back, verification, or Evidence contract was added or changed.
+
+**Completion gate:** focused tests PASS — 2 files / 52 tests; typecheck PASS; full unit/integration PASS — 33 files / 436 tests; ESLint PASS with zero warnings; production build PASS with routes unchanged (`/`, `/api/inspect`, `/api/rooms`, framework `/_not-found`); Chromium E2E PASS — 26/26, including exact entry, invalid-before-read, required-room heading/reader/refresh, ready-Agent composer rebinding/draft reset, and zero publish on Open Room; security regression PASS — 2 files / 11 tests; offline dependency audit PASS — 0 vulnerabilities; diff/whitespace check PASS.
+
+No live Technocore write, commit, push, deploy, Vercel change, Technocore message, or X post occurred. No Sonnet-specific registration automation was started.
+
+## Next Exact Action — Direct Exact Room Entry complete locally
+
+Product Owner performs the manual acceptance flow, then separately authorizes any release action.

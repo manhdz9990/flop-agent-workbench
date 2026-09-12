@@ -116,6 +116,19 @@ describe("V12-08A Rooms / Chat adapter", () => {
     expect(source).not.toMatch(/initialRoom|ExplicitInitialRoomRead/);
   });
 
+  it("routes discovered and exact room entry through the one selected-room transition", () => {
+    const source = readFileSync(new URL("../../app/rooms-chat.tsx", import.meta.url), "utf8");
+    expect(source).toContain("const room = validateRoomName(exactRoom)");
+    expect(source).toMatch(/function openExactRoom[\s\S]*selectRoom\(room\)/);
+    expect(source).toContain("onClick={() => selectRoom(item.room)}");
+    expect(source).toContain("liveSession.current?.select(room)");
+    expect(source).toContain("const room = selectedRoom, draft = text");
+    expect(source).toContain("prepareSignedMessage({ room, text: draft");
+    expect(source).toContain("publishPreparedMessage(signed, attempts)");
+    for (const reset of ["setMessages([])", "setOptimisticMessages([])", "setText(\"\")"]) expect(source).toContain(reset);
+    expect(source).not.toMatch(/manualSelectedRoom|contestRoom|customRoom/);
+  });
+
   it("hardens room-row containment and collapses secondary navigation by actual workspace width", () => {
     const source = readFileSync(new URL("../../app/rooms-chat.tsx", import.meta.url), "utf8");
     const styles = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
